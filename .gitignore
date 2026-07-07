@@ -1,0 +1,29 @@
+# local config / secrets
+config.yaml
+.mewcode/
+.env
+.env.*
+*.local.yaml
+*.local.yml
+
+# Python cache / build
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE / local agent data
+.idea/
+.vscode/
+.trae/
+.zerocode/
+.claude/
+CLAUDE.md
+
+# logs
+*.log
