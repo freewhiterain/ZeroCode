@@ -1,3 +1,9 @@
+"""Hook 可订阅的生命周期事件枚举。
+
+事件覆盖会话、轮次、工具调用、消息收发和系统级状态变化，是 Hook
+配置中 event 字段的合法取值来源。
+"""
+
 from __future__ import annotations
 
 from enum import StrEnum

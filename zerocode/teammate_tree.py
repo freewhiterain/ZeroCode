@@ -1,3 +1,8 @@
+"""团队成员进度树渲染组件。
+
+将 team lead 与各 teammate 的运行状态、工具次数和 token 统计显示在 TUI 中。
+"""
+
 from __future__ import annotations
 
 from textual.widget import Widget

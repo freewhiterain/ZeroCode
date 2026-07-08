@@ -1,3 +1,8 @@
+"""后台 Agent 任务的生命周期管理。
+
+该模块负责启动、接管、取消后台任务，并在任务结束后记录结果、用量信息
+以及通知队列状态，供主对话轮询并注入任务完成消息。
+"""
 from __future__ import annotations
 
 import asyncio

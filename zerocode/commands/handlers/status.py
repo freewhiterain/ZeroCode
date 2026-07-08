@@ -1,3 +1,8 @@
+"""实现 /status 命令。
+
+汇总权限模式、会话、Token、工具、记忆、工作目录和版本等运行状态。
+"""
+
 from __future__ import annotations
 
 import os

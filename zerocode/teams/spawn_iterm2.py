@@ -1,3 +1,8 @@
+"""基于 iTerm2 it2 CLI 启动外部 teammate 进程。
+
+当用户显式使用 iTerm2 pane 后端时，本模块负责拆分 pane 并运行 teammate CLI。
+"""
+
 from __future__ import annotations
 
 import logging

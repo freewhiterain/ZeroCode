@@ -1,3 +1,9 @@
+"""权限规则的解析、加载与匹配。
+
+规则使用 Tool(pattern) 语法描述某类工具的内容匹配模式，并按用户、
+项目、本地层级加载；越靠后的同层规则优先级越高。
+"""
+
 from __future__ import annotations
 
 import re

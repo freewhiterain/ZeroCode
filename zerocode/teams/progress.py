@@ -1,3 +1,9 @@
+"""团队成员运行进度与活动摘要模型。
+
+该模块集中维护 teammate 的工具调用、token 用量、最近活动和展示用动词，
+供 TUI 进度树与团队管理器读取。
+"""
+
 from __future__ import annotations
 
 import random
@@ -33,11 +39,13 @@ SPINNER_VERBS = [
 
 
 def random_verb() -> str:
+    """从预置动词表中随机选取一个用于空闲/思考状态展示的动词。"""
     return random.choice(SPINNER_VERBS)
 
 
 @dataclass
 class ToolActivity:
+    """记录一次工具调用的名称与面向用户的活动描述。"""
     tool_name: str
     description: str
 
@@ -68,6 +76,7 @@ def _describe(tool_name: str, args: dict) -> str:
 
 @dataclass
 class TeammateProgress:
+    """线程安全地累计单个 teammate 的运行状态和展示信息。"""
     name: str
     team_name: str
     status: str = "running"

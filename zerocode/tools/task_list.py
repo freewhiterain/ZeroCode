@@ -1,3 +1,10 @@
+"""共享任务列表工具模块。
+
+本模块实现 TaskList 工具，用于按状态或负责人筛选团队任务看板。
+输出会为不同任务状态添加简洁图标，并在存在阻塞依赖时展示 blocked_by
+信息，便于协作场景快速了解整体任务进度。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,6 +17,7 @@ if TYPE_CHECKING:
     from zerocode.teams.manager import TeamManager
 
 
+# 列表查询入参：支持按状态和负责人过滤团队共享任务。
 class TaskListParams(BaseModel):
     status: str | None = None
     assignee: str | None = None

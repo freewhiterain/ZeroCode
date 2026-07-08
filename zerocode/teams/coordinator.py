@@ -1,3 +1,9 @@
+"""Coordinator 模式的环境切换与系统提示词构建。
+
+本模块根据会话模式同步 coordinator 环境变量，并生成用于团队编排的
+system prompt 与 worker 工具上下文。
+"""
+
 from __future__ import annotations
 
 import os
@@ -37,6 +43,7 @@ def match_session_mode(
 
 
 def get_coordinator_system_prompt(agent_catalog: list[tuple[str, str]] | None = None) -> str:
+    """根据可用 agent 类型生成 coordinator 模式的完整系统提示词。"""
     if agent_catalog:
         agent_lines = "\n".join(f"- **{name}**: {desc}" for name, desc in agent_catalog)
     else:

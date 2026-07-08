@@ -1,3 +1,9 @@
+"""把已加载 Skill 动态注册为斜杠命令。
+
+注册流程会先清理旧的 Skill 命令，再为当前 catalog 生成命令处理器，
+根据 Skill 模式选择 fork 异步执行或 inline 注入执行。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -15,6 +21,7 @@ log = logging.getLogger(__name__)
 _REGISTERED_SKILL_NAMES: set[str] = set()
 
 
+# 重新加载 Skill 后会调用该函数刷新动态命令，避免旧命令残留或与内置命令冲突。
 def register_skill_commands(
     registry: CommandRegistry,
     loader: SkillLoader,

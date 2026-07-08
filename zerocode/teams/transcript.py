@@ -1,3 +1,9 @@
+"""团队成员会话 transcript 的序列化与加载。
+
+用于把 ConversationManager 历史转换为 JSON 文件，便于 teammate 会话跨进程
+保存和恢复。
+"""
+
 from __future__ import annotations
 
 import json

@@ -1,3 +1,9 @@
+"""Shell 命令执行工具模块。
+
+本模块实现 Bash 工具，用于异步执行 shell 命令并收集标准输出和错误。
+执行时会限制最大超时时间，超时后终止子进程并返回错误结果。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,6 +15,7 @@ from zerocode.tools.base import Tool, ToolResult
 MAX_TIMEOUT = 600
 
 
+# 命令执行入参：timeout 会在执行时被限制到模块级最大值。
 class Params(BaseModel):
     command: str = Field(description="Shell command to execute")
     timeout: int = Field(default=120, description="Timeout in seconds (max 600)")

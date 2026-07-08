@@ -1,3 +1,10 @@
+"""进入隔离工作区工具模块。
+
+本模块实现 EnterWorktree 工具，用于基于 git 创建隔离 worktree 并将
+当前会话切换进去。工具会生成或校验工作区名称，防止非法路径片段，
+并返回后续退出工作区的操作提示。
+"""
+
 from __future__ import annotations
 
 import secrets
@@ -12,6 +19,7 @@ if TYPE_CHECKING:
     from zerocode.worktree.manager import WorktreeManager
 
 
+# 进入工作区入参：可选名称为空时会自动生成随机安全名称。
 class EnterWorktreeParams(BaseModel):
     name: Optional[str] = Field(
         default=None,

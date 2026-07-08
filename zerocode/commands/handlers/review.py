@@ -1,3 +1,8 @@
+"""实现 /review 命令。
+
+构造代码审查提示词，并把用户提供的额外关注点附加到审查请求中。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

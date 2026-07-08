@@ -1,3 +1,8 @@
+"""Skill 执行器。
+
+根据 SkillDef 的执行模式，将 skill 正文注入当前 agent 或创建隔离的 fork agent
+执行，并按声明的 allowedTools 过滤可用工具。
+"""
 from __future__ import annotations
 
 import logging

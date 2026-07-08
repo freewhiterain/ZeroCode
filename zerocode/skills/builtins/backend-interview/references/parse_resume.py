@@ -1,4 +1,8 @@
-"""解析简历文件并提取结构化信息。"""
+"""解析简历文件并提取结构化信息。
+
+该引用工具供 backend-interview skill 调用，用简单的标题/关键词规则从简历文本中
+提取姓名、年限、技术栈和主要章节，返回便于面试准备使用的 Markdown 摘要。
+"""
 from __future__ import annotations
 
 import re

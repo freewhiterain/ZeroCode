@@ -24,6 +24,7 @@ def _run_git(args: list[str], cwd: str) -> subprocess.CompletedProcess[str]:
 
 @dataclass
 class Changes:
+    """worktree 相对创建时 HEAD 的变更计数。"""
     uncommitted: int = 0
     new_commits: int = 0
 
@@ -58,6 +59,7 @@ def has_worktree_changes(wt_path: str, head_commit: str) -> bool:
 
 @dataclass
 class CleanupResult:
+    """自动清理 worktree 后返回给调用方的结果。"""
     kept: bool
     path: str = ""
     branch: str = ""

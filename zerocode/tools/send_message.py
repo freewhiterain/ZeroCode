@@ -1,3 +1,10 @@
+"""团队消息发送工具模块。
+
+本模块实现 SendMessage 工具，用于团队成员之间点对点或广播通信。
+它负责校验消息类型、构造邮箱消息、解析收件人名称，并在 pane 后端
+下唤醒目标成员以便及时处理新消息。
+"""
+
 from __future__ import annotations
 
 import logging
@@ -13,6 +20,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+# 团队消息入参：除正文外，文本消息还需要短摘要便于提醒展示。
 class SendMessageParams(BaseModel):
     to: str
     message: str

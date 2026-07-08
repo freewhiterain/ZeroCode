@@ -1,3 +1,10 @@
+"""结构化输出工具模块。
+
+本模块实现 SyntheticOutput 系统工具，用于在非交互或协调模式中返回
+结构化结果。它可选地依据简单 JSON schema 校验输出类型和必填字段，
+并在输出不是字符串时序列化为可读 JSON。
+"""
+
 from __future__ import annotations
 
 import json
@@ -8,6 +15,7 @@ from pydantic import BaseModel
 from zerocode.tools.base import Tool, ToolResult
 
 
+# 结构化输出入参：允许对象、数组或纯文本三类结果。
 class SyntheticOutputParams(BaseModel):
     output: dict[str, Any] | list[Any] | str
 

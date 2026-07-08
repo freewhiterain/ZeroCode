@@ -1,3 +1,9 @@
+"""Hook 配置加载与校验。
+
+load_hooks 将原始配置字典转换为 Hook 对象，同时校验事件名、动作
+类型、必填字段以及 reject/async 等约束，尽早暴露配置错误。
+"""
+
 from __future__ import annotations
 
 from zerocode.hooks.conditions import ConditionParseError, parse_condition
@@ -24,6 +30,7 @@ def _identify(entry: dict, index: int) -> str:
     return f"hook '{hook_id}'" if hook_id else f"hook #{index + 1}"
 
 
+# 将配置文件中的原始 hook 列表转换为运行时对象；任何结构性错误都会直接抛出配置异常。
 def load_hooks(raw_hooks: list[dict] | None) -> list[Hook]:
     if not raw_hooks:
         return []

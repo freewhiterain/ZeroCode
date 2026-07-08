@@ -1,3 +1,10 @@
+"""共享任务创建工具模块。
+
+本模块实现 TaskCreate 工具，用于向团队任务看板新增任务。
+工具会记录标题、描述、负责人、依赖关系和创建者信息，并将任务存储
+分配的 ID、状态和负责人摘要返回给调用方。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,6 +17,7 @@ if TYPE_CHECKING:
     from zerocode.teams.manager import TeamManager
 
 
+# 任务创建入参：支持基础信息、负责人以及双向依赖字段。
 class TaskCreateParams(BaseModel):
     title: str
     description: str = ""

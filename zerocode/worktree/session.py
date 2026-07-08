@@ -1,3 +1,8 @@
+"""当前 worktree 会话的持久化读写。
+
+会话文件记录原始目录、隔离 worktree 路径和原始 Git 状态，用于进程重启后恢复。
+"""
+
 from __future__ import annotations
 
 import json

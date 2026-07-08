@@ -1,4 +1,9 @@
-"""ZeroCode 的配置校验逻辑。"""
+"""ZeroCode 的配置校验逻辑。
+
+集中校验 YAML 解析后的原始配置结构，保证 provider、权限模式、MCP、hooks、
+worktree 和团队模式等字段在进入 config.py 的 dataclass 转换前已被清洗成
+稳定、可预期的字典形态。
+"""
 
 from __future__ import annotations
 

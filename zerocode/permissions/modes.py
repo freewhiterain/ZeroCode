@@ -1,3 +1,9 @@
+"""权限模式与默认决策矩阵。
+
+不同模式对读、写、命令三类工具给出默认 allow/deny/ask 策略，
+供规则未命中时作为兜底权限判定。
+"""
+
 from __future__ import annotations
 
 from enum import Enum

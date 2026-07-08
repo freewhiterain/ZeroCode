@@ -1,3 +1,10 @@
+"""文件读取工具模块。
+
+本模块实现 ReadFile 工具，用于读取文件内容并按行号返回。
+读取成功后会写入内容缓存和文件状态缓存，为后续 EditFile/WriteFile
+执行“先读后改”校验提供基准。
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,6 +19,7 @@ if TYPE_CHECKING:
     from zerocode.tools.file_state_cache import FileStateCache
 
 
+# 读取工具入参：支持从指定偏移开始读取有限行数，避免一次输出过长文件。
 class Params(BaseModel):
     file_path: str = Field(description="Absolute or relative path to the file to read")
     offset: int = Field(default=0, description="Line offset to start reading from (0-based)")

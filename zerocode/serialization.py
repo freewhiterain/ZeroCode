@@ -1,3 +1,10 @@
+"""对话消息到各 provider 请求格式的序列化适配。
+
+内部 Message 结构保持统一；本模块按 Anthropic Messages、OpenAI Responses
+和 OpenAI Chat Completions 三种协议生成对应的消息列表，隔离各家 API
+对工具调用、工具结果和 thinking block 的格式差异。
+"""
+
 from __future__ import annotations
 
 import json
@@ -58,6 +65,7 @@ def build_anthropic_messages(messages: list[Message]) -> list[dict[str, Any]]:
 
 
 def build_openai_input(messages: list[Message]) -> list[dict[str, Any]]:
+    """生成 OpenAI Responses API 的 input 消息列表。"""
     result: list[dict[str, Any]] = []
     for m in messages:
         if m.tool_uses:

@@ -1,3 +1,10 @@
+"""Agent 主循环与事件流定义。
+
+本模块把 LLM streaming、工具调用、权限确认、hooks、上下文压缩、记忆提取
+和团队/子 agent 通知串成统一的异步事件流。UI 层或非交互入口只需消费
+AgentEvent，即可驱动显示、权限弹窗和工具结果回写。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -234,6 +241,7 @@ def partition_tool_calls(
     tool_calls: list[ToolCallComplete],
     registry: ToolRegistry,
 ) -> list[ToolBatch]:
+    """按工具并发安全性把同一轮 tool calls 切分为执行批次。"""
     batches: list[ToolBatch] = []
     for tc in tool_calls:
         tool = registry.get(tc.tool_name)
@@ -297,6 +305,13 @@ class StreamingExecutor:
 # ---------------------------------------------------------------------------
 
 class Agent:
+    """ZeroCode 的核心推理执行单元。
+
+    Agent 维护一段 ConversationManager，对每一轮 LLM 响应进行流式消费，
+    根据响应中的工具调用执行权限检查、hooks、工具运行和结果回写，直到模型
+    不再请求工具或达到保护性终止条件。
+    """
+
     def __init__(
         self,
         client: LLMClient,
@@ -1006,6 +1021,7 @@ class Agent:
         self, task: str, conversation: ConversationManager | None = None,
         event_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> str:
+        """非交互模式主循环，阻塞运行到模型给出最终文本。"""
         if conversation is None:
             conversation = ConversationManager()
 

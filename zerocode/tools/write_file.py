@@ -1,3 +1,10 @@
+"""文件写入工具模块。
+
+本模块实现 WriteFile 工具，用于覆盖写入文件并按需创建父目录。
+写入前会结合文件状态缓存执行“先读后写”和变更检测，写入成功后
+同步失效内容缓存并刷新状态缓存，避免覆盖用户未读取的新变更。
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,11 +19,13 @@ if TYPE_CHECKING:
     from zerocode.tools.file_state_cache import FileStateCache
 
 
+# 写入工具入参：目标路径和完整文件内容均由调用方显式提供。
 class Params(BaseModel):
     file_path: str = Field(description="Path to the file to write")
     content: str = Field(description="Content to write to the file")
 
 
+# 文件写入工具：负责覆盖写入、缓存失效和写入前的文件状态保护。
 class WriteFile(Tool):
     name = "WriteFile"
     description = (

@@ -1,3 +1,10 @@
+"""共享任务更新工具模块。
+
+本模块实现 TaskUpdate 工具，用于修改团队任务看板中的任务状态、
+负责人、描述和依赖关系。执行时会先校验状态合法性，再通过团队的
+任务存储进行原子更新，并汇总实际变更项返回给调用方。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,6 +17,7 @@ if TYPE_CHECKING:
     from zerocode.teams.manager import TeamManager
 
 
+# 任务更新入参：所有可变字段均为可选，便于一次只修改部分属性。
 class TaskUpdateParams(BaseModel):
     task_id: str
     status: str | None = None

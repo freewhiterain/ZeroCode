@@ -1,3 +1,9 @@
+"""文件路径匹配工具模块。
+
+本模块实现 Glob 工具，用于按 glob 模式查找文件并返回相对路径。
+结果会排除缓存、依赖和版本控制目录，适合快速发现项目中的候选文件。
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,6 +13,7 @@ from pydantic import BaseModel, Field
 from zerocode.tools.base import SKIP_DIRS, Tool, ToolResult
 
 
+# 路径匹配入参：以指定目录为基准解释 glob 模式。
 class Params(BaseModel):
     pattern: str = Field(description="Glob pattern to match (e.g. '**/*.py')")
     path: str = Field(default=".", description="Base directory to search from")

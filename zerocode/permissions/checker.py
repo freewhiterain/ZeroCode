@@ -1,3 +1,10 @@
+"""工具调用权限判定的分层检查器。
+
+PermissionChecker 按固定顺序合并 Plan 模式例外、安全命令识别、
+危险命令拦截、路径沙箱、用户规则和权限模式，最终产出允许、
+拒绝或询问用户的决策。
+"""
+
 from __future__ import annotations
 
 import os
@@ -36,6 +43,7 @@ class PermissionChecker:
         self.plan_file_path: str = ""
 
 
+    # 核心权限入口：按从“强约束/显式规则”到“模式兜底”的顺序短路返回。
     def check(self, tool: Tool, arguments: dict[str, Any]) -> Decision:
         content = extract_content(tool.name, arguments)
 

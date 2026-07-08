@@ -1,3 +1,9 @@
+"""团队共享任务的数据结构与文件存储。
+
+SharedTaskStore 使用 JSON 文件保存团队任务列表，支持创建、筛选和增量更新，
+供多个 teammate 协作时同步任务状态。
+"""
+
 from __future__ import annotations
 
 import json
@@ -8,6 +14,7 @@ from typing import Any
 
 @dataclass
 class SharedTask:
+    """团队协作中的单个共享任务记录。"""
     id: str
     title: str
     description: str = ""
@@ -27,6 +34,7 @@ class SharedTask:
 
 
 class SharedTaskStore:
+    """以 JSON 文件为后端的共享任务仓库。"""
 
 
     def __init__(self, path: str | Path) -> None:

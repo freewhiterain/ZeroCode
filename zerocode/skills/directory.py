@@ -1,3 +1,8 @@
+"""目录型 Skill 的自定义工具注册支持。
+
+读取 skill 目录中的 tool.json，动态加载 references 下同名 Python 实现，
+并把这些实现包装成统一的 Tool 注册到工具注册表中。
+"""
 from __future__ import annotations
 
 import importlib.util

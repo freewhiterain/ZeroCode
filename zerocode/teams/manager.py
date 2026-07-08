@@ -1,3 +1,9 @@
+"""团队生命周期与 teammate 运行资源管理。
+
+TeamManager 负责创建/加载团队、登记成员、维护任务与信箱、清理 pane/worktree，
+并向主 agent 汇总 teammate 通知。
+"""
+
 from __future__ import annotations
 
 import json
@@ -59,6 +65,7 @@ class TeamManager:
         teammate_mode: str = "",
         is_interactive: bool = True,
     ) -> AgentTeam:
+        """创建团队目录、配置文件、共享任务文件和信箱目录。"""
         backend = self.detect_backend(teammate_mode, is_interactive)
         slug = unique_team_name(name)
         team_dir = resolve_team_dir(slug)
@@ -165,6 +172,7 @@ class TeamManager:
         return self._pane_ids.get(agent_id)
 
     def delete_team(self, team_name: str) -> None:
+        """在确认无活跃成员后清理团队资源和注册信息。"""
         team = self.get_team(team_name)
         if team is None:
             raise TeamError(f"Team '{team_name}' not found")

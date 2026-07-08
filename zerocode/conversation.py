@@ -1,3 +1,10 @@
+"""内部对话历史模型与 token 估算。
+
+ConversationManager 保存 provider 无关的消息结构，并负责注入环境上下文、
+长期记忆、工具结果以及系统提醒。序列化到具体 LLM API 的工作由
+serialization 模块完成。
+"""
+
 from __future__ import annotations
 
 import json
@@ -21,6 +28,8 @@ class ToolResultBlock:
 
 @dataclass
 class ThinkingBlock:
+    """支持 thinking 的 provider 返回的推理块及签名。"""
+
     thinking: str
     signature: str
 
@@ -129,6 +138,7 @@ class ConversationManager:
         )
 
     def add_system_reminder(self, content: str) -> None:
+        """以 user 消息形式追加系统提醒，保持各 provider 的兼容性。"""
         self.history.append(
             Message(
                 role="user",

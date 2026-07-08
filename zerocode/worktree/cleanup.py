@@ -1,3 +1,9 @@
+"""过期临时 worktree 的后台清理逻辑。
+
+清理仅针对符合临时命名模式、超过时间阈值且无本地/未推送变更的 worktree，
+避免误删用户手动创建的工作区。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -27,6 +33,7 @@ def _is_ephemeral(name: str) -> bool:
 
 
 async def cleanup_stale_worktrees(manager: WorktreeManager, cutoff_hours: int) -> int:
+    """扫描并删除超过阈值且安全可移除的临时 worktree。"""
     cutoff = datetime.now() - timedelta(hours=cutoff_hours)
     removed = 0
     worktree_dir = Path(manager.worktree_dir)

@@ -1,3 +1,9 @@
+"""Textual 命令补全弹窗组件。
+
+组件维护候选展示文本、提交值与当前游标位置，负责在命令输入时
+渲染可选项并在点击选择后向上层发送选中消息。
+"""
+
 from __future__ import annotations
 
 from textual.message import Message as TMessage

@@ -1,8 +1,16 @@
+"""文件状态缓存模块。
+
+本模块提供 FileStateCache，用于记录文件读取时的内容和修改时间。
+写入或编辑工具可据此确认目标文件已经被读取且未被外部修改，
+从而降低覆盖用户最新改动的风险。
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 
+# 文件状态缓存：为写入类工具提供统一的“读取后才能修改”保护。
 class FileStateCache:
     """Tracks which files have been read, enforcing read-before-edit.
 

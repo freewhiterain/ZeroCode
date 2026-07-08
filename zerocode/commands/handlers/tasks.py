@@ -1,3 +1,8 @@
+"""创建 /tasks 后台任务管理命令。
+
+命令处理器可列出任务、查看单个任务详情，或请求取消仍在运行的后台任务。
+"""
+
 from __future__ import annotations
 
 import time

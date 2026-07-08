@@ -1,3 +1,8 @@
+"""实现 /compact 命令。
+
+在上下文达到阈值后触发手动压缩，并把压缩边界写入会话记录以支持恢复。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

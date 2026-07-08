@@ -1,3 +1,9 @@
+"""Hook 动作执行器。
+
+根据 Action.type 分派到命令、提示、HTTP 或 Agent 执行逻辑，并把
+执行输出统一包装为 ActionResult 供 HookEngine 后续处理。
+"""
+
 from __future__ import annotations
 
 import asyncio

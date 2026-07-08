@@ -1,3 +1,8 @@
+"""实现 /skill 命令。
+
+提供 Skill 列表、详情查看和重新加载能力，是管理技能包的本地命令入口。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -1,3 +1,8 @@
+"""实现 /mcp 命令。
+
+汇总当前 MCP 连接状态，并按服务器列出已注册的 MCP 工具数量和名称预览。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

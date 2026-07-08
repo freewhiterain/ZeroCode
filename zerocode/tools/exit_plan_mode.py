@@ -1,3 +1,10 @@
+"""退出计划模式工具模块。
+
+本模块实现 ExitPlanMode 工具，用于在计划文件已写好后结束计划模式，
+并触发用户审批流程。它只负责校验当前状态和返回退出提示，不执行
+后续文件或任务操作。
+"""
+
 from __future__ import annotations
 
 from typing import Callable
@@ -7,6 +14,7 @@ from pydantic import BaseModel
 from zerocode.tools.base import Tool, ToolResult
 
 
+# 退出计划模式无需参数，状态检查由构造时注入的回调完成。
 class ExitPlanModeParams(BaseModel):
     pass
 

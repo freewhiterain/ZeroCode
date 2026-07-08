@@ -1,3 +1,10 @@
+"""精确文本编辑工具模块。
+
+本模块实现 EditFile 工具，用于在文件中替换唯一匹配的字符串。
+编辑前会检查文件是否已读取且未被外部修改，替换时要求 old_string
+只出现一次，从而降低误改多处内容的风险。
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,6 +19,7 @@ if TYPE_CHECKING:
     from zerocode.tools.file_state_cache import FileStateCache
 
 
+# 编辑工具入参：要求调用方提供唯一旧文本和替换后的新文本。
 class Params(BaseModel):
     file_path: str = Field(description="Path to the file to edit")
     old_string: str = Field(description="The exact string to find and replace (must be unique in file)")

@@ -1,3 +1,8 @@
+"""解析 Markdown Agent 定义文件。
+
+定义文件由 YAML frontmatter 和正文提示词组成；本模块负责校验必要字段、
+权限/模型配置以及隔离模式，并转换为运行时使用的 AgentDef。
+"""
 from __future__ import annotations
 
 import logging

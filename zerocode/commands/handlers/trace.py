@@ -1,3 +1,8 @@
+"""创建 /trace Agent 追踪查看命令。
+
+把 TraceManager 中的父子节点渲染为树形文本，并汇总各 Agent 的状态和 Token。
+"""
+
 from __future__ import annotations
 
 import time

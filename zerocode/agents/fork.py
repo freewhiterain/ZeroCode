@@ -1,3 +1,8 @@
+"""构造 fork 子 Agent 的对话上下文。
+
+fork 会复制当前对话历史、补齐中断工具调用的占位结果，并追加严格的子进程
+工作规则，确保派生出的 agent 只执行被分配的范围且不能继续嵌套 fork。
+"""
 from __future__ import annotations
 
 import copy

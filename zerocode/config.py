@@ -1,3 +1,9 @@
+"""ZeroCode 配置加载与运行时配置对象。
+
+负责读取用户级、项目级和本地配置文件，完成 YAML 解析、结构校验、
+分层合并，并把清洗后的字典转换为应用启动所需的 dataclass 配置对象。
+"""
+
 from __future__ import annotations
 
 import os
@@ -29,6 +35,8 @@ _ENV_VAR_RE = re.compile(r"\$\{([^}]+)\}")
 
 @dataclass
 class ProviderConfig:
+    """单个模型 provider 的连接、模型与 token 限制配置。"""
+
     name: str
     protocol: str
     base_url: str
@@ -138,6 +146,7 @@ class AppConfig:
 
 
 def _load_single_file(path: Path) -> AppConfig:
+    """读取并校验单个配置文件，返回 AppConfig。"""
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as e:
@@ -219,6 +228,7 @@ def _merge_config(base: AppConfig, override: AppConfig) -> AppConfig:
 
 
 def load_config(path: Path | None = None) -> AppConfig:
+    """加载显式配置文件，或按用户级、项目级、本地级顺序合并配置。"""
     if path is not None:
         if not path.exists():
             raise ConfigError(f"Config file not found: {path}")

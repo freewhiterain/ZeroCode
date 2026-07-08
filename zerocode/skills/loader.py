@@ -1,3 +1,8 @@
+"""Skill 定义加载器。
+
+按项目级、用户级、内置级顺序扫描 Skill 定义，支持单文件 skill 与目录型
+SKILL.md，并在获取时尝试热重载来源文件以反映最新内容。
+"""
 from __future__ import annotations
 
 import importlib.resources

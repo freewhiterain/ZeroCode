@@ -1,3 +1,9 @@
+"""技能加载工具模块。
+
+本模块实现 LoadSkill 系统工具，用于按名称激活技能 SOP，并在目录型
+技能存在专用工具时将其注册到当前 Agent 的工具注册表中。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -12,6 +18,7 @@ if TYPE_CHECKING:
     from zerocode.skills.loader import SkillLoader
 
 
+# 技能加载入参：通过目录或目录清单中的技能名称定位 SOP。
 class LoadSkillParams(BaseModel):
     name: str = Field(description="The name of the skill to load")
 

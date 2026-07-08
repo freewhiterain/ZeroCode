@@ -1,3 +1,8 @@
+"""会话恢复选择器的内联 TUI 组件。
+
+负责格式化历史会话元数据、提供键盘搜索过滤，并返回用户选择的 session_id。
+"""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -106,6 +111,7 @@ class InlineResumeWidget(Vertical, can_focus=True):
 
 
     def _refilter(self) -> None:
+        """根据搜索框内容刷新候选会话列表，并重置光标。"""
         if not self._search:
             self._filtered = list(self._sessions)
         else:

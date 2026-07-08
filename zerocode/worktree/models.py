@@ -1,3 +1,5 @@
+"""worktree 子系统的数据模型。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -6,6 +8,7 @@ from datetime import datetime
 
 @dataclass
 class Worktree:
+    """一个已创建 Git worktree 的静态信息。"""
     name: str
     path: str
     branch: str
@@ -16,6 +19,7 @@ class Worktree:
 
 @dataclass
 class WorktreeSession:
+    """当前进程进入 worktree 前后的会话状态。"""
     original_cwd: str
     worktree_path: str
     worktree_name: str

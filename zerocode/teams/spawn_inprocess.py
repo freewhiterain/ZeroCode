@@ -1,3 +1,9 @@
+"""在当前 Python 进程内启动 teammate agent。
+
+该后端通过 asyncio task 运行 teammate，并实时把工具调用、token 用量和流式文本
+同步到 TeammateProgress。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -55,8 +61,9 @@ def spawn_inprocess_teammate(
     member: TeammateInfo | None = None,
     team_name: str = "",
 ) -> InProcessTeammateHandle:
+    """创建并启动一个在当前事件循环中运行的 teammate task。"""
 
-    # Create progress tracker and attach to member if provided
+    # 创建进度跟踪器；若传入成员对象，则把运行时进度挂到成员上供 UI 读取
     progress = TeammateProgress(
         name=name,
         team_name=team_name,

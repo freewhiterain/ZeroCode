@@ -1,3 +1,11 @@
+"""延迟工具检索模块。
+
+本模块提供 ToolSearch 工具，用于在运行期间按名称或关键词发现
+尚未注入到模型上下文中的延迟工具。核心流程包括解析 select 查询、
+调用工具注册表搜索匹配项、标记已发现工具，并将完整 schema 以
+JSON 形式返回给调用方。
+"""
+
 from __future__ import annotations
 
 import json
@@ -11,11 +19,13 @@ if __import__("typing").TYPE_CHECKING:
     from zerocode.tools import ToolRegistry
 
 
+# ToolSearch 的入参：既支持关键词搜索，也支持 select:<name> 精确加载。
 class ToolSearchParams(BaseModel):
     query: str
     max_results: int = 5
 
 
+# 延迟工具检索工具：只暴露搜索入口，具体发现和 schema 生成交给注册表处理。
 class ToolSearchTool(Tool):
     name = "ToolSearch"
     description = (

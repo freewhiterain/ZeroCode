@@ -1,3 +1,5 @@
+"""Agent 子系统对外导出的公共入口。"""
+
 from zerocode.agents.parser import AgentDef, AgentParseError, parse_agent_file
 from zerocode.agents.loader import AgentLoader
 from zerocode.agents.tool_filter import resolve_agent_tools

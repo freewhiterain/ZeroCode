@@ -1,3 +1,8 @@
+"""实现 /permission 命令。
+
+用于查看权限状态、切换权限模式、列出或追加规则，以及重置本地权限规则。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

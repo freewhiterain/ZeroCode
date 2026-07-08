@@ -1,3 +1,9 @@
+"""权限审批的内联 TUI 组件。
+
+当工具调用需要用户确认时，本模块渲染审批选项并把键盘选择映射为
+PermissionResponse。
+"""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult

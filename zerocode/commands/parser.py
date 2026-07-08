@@ -1,3 +1,9 @@
+"""解析和补全斜杠命令的轻量工具。
+
+本模块只负责把用户输入拆分成命令名与参数，并基于注册表生成
+命令补全候选；实际命令执行由 registry 与 handlers 模块协作完成。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import CommandRegistry

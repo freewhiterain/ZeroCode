@@ -1,3 +1,10 @@
+"""用户提问工具模块。
+
+本模块实现 AskUserQuestion 系统工具，用于在代码和上下文无法确定答案时
+向用户发起结构化问题。工具会创建待处理事件并等待外部界面回填答案，
+最后将问题名称与回答整理为文本结果。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -8,6 +15,7 @@ from pydantic import BaseModel, Field
 from zerocode.tools.base import Tool, ToolResult
 
 
+# 单个问题的结构定义，供前端按类型渲染输入控件。
 class QuestionItem(BaseModel):
     type: str = Field(description="Question type: text, radio, select, checkbox")
     name: str = Field(description="Question identifier")

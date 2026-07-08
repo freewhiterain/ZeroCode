@@ -1,3 +1,10 @@
+"""正则内容搜索工具模块。
+
+本模块实现 Grep 工具，用于在指定目录下按正则表达式搜索文件内容。
+搜索时会应用文件名 glob 过滤，并跳过项目中常见的缓存、虚拟环境和
+依赖目录，以减少无关结果。
+"""
+
 from __future__ import annotations
 
 import re
@@ -8,6 +15,7 @@ from pydantic import BaseModel, Field
 from zerocode.tools.base import SKIP_DIRS, Tool, ToolResult
 
 
+# 内容搜索入参：正则表达式必填，路径和文件名过滤可选。
 class Params(BaseModel):
     pattern: str = Field(description="Regex pattern to search for")
     path: str = Field(default=".", description="Base directory to search from")

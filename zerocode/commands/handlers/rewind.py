@@ -1,3 +1,8 @@
+"""实现 /rewind 命令。
+
+展示文件历史检查点，并按用户选择恢复代码、会话或二者的历史状态。
+"""
+
 from __future__ import annotations
 
 import time

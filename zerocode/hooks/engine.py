@@ -1,3 +1,9 @@
+"""Hook 匹配与调度引擎。
+
+HookEngine 负责按生命周期事件筛选 Hook、处理 once/条件匹配、同步
+或异步执行动作，并收集提示消息、通知和工具拒绝结果。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -38,6 +44,7 @@ class HookEngine:
         return matched
 
 
+    # 普通生命周期 Hook：异步 Hook 只调度不阻塞，同步 Hook 则按顺序等待执行完成。
     async def run_hooks(self, event: str, ctx: HookContext) -> None:
         matched = self.find_matching_hooks(event, ctx)
         for hook in matched:

@@ -1,3 +1,8 @@
+"""计划模式审批的内联 TUI 组件。
+
+用于展示模型生成的执行计划后的继续方式：自动批准、手动批准或提交修改反馈。
+"""
+
 from __future__ import annotations
 
 from enum import Enum

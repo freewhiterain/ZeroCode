@@ -1,4 +1,9 @@
-"""ZeroCode 的系统提示词（system prompt）构建。"""
+"""ZeroCode 的系统提示词（system prompt）构建。
+
+通过带优先级的 PromptSection 组合基础身份、任务规范、工具使用规范、
+语气风格、环境信息以及 hooks/skills/memory 注入内容，最终生成每次 LLM
+调用使用的 system prompt；同时提供 plan 模式提醒和运行环境上下文构造。
+"""
 
 from __future__ import annotations
 
@@ -15,6 +20,8 @@ class PromptSection:
 
 
 class PromptBuilder:
+    """按 priority 组合 PromptSection 的简单构建器。"""
+
     def __init__(self) -> None:
         self._sections: list[PromptSection] = []
 
@@ -283,6 +290,7 @@ def build_environment_context(
     skill_catalog: str = "",
     agent_catalog: str = "",
 ) -> str:
+    """构建注入对话历史的运行环境、技能和子 agent 上下文。"""
     parts = [
         f"Current working directory: {work_dir}",
         f"Operating system: {platform.system()} {platform.release()}",

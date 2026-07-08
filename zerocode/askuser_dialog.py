@@ -1,3 +1,9 @@
+"""AskUser 工具的内联交互组件。
+
+负责在聊天区域中渲染单选/多选/自定义输入问题，并把用户选择转换为
+工具调用可消费的答案字典。
+"""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -145,6 +151,7 @@ class InlineAskUserWidget(Vertical, can_focus=True):
         self.query_one("#askuser-content", Static).update(self._build_content())
 
     def _save_current_answer(self) -> None:
+        """把当前问题的光标/多选/自定义输入状态写入答案缓存。"""
         q = self._questions[self._q_idx]
         options = q.get("options", [])
         cursor = self._cursors[self._q_idx]

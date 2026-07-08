@@ -1,3 +1,9 @@
+"""Hooks 子系统的公共导出入口。
+
+集中暴露条件解析、生命周期事件、Hook 模型、加载器与执行引擎，
+便于其他模块以稳定接口接入 Hook 能力。
+"""
+
 from zerocode.hooks.conditions import (
     Condition,
     ConditionGroup,

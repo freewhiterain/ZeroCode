@@ -1,3 +1,8 @@
+"""实现 /plan 命令。
+
+切换 UI 到只读 Plan 模式，并在带参数时把任务描述继续发送给 Agent。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

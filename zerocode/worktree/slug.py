@@ -1,3 +1,8 @@
+"""worktree 名称校验与路径片段转换。
+
+限制名称只包含安全字符和有限长度，并把层级式名称压平为可用于目录/分支名的 slug。
+"""
+
 from __future__ import annotations
 
 import re

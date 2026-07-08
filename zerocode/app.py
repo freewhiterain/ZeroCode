@@ -1,3 +1,10 @@
+"""ZeroCode 的 Textual 终端界面应用。
+
+本模块负责交互式聊天界面、命令分发、provider 选择、权限/计划弹窗、
+工具调用展示、session 持久化、MCP 初始化以及后台任务/团队状态轮询。
+核心推理逻辑仍在 Agent 中，这里主要承担 UI 编排和状态同步职责。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -460,6 +467,7 @@ THINKING_VERBS = [
 
 
 class ToolGroupSummary(Static, can_focus=True):
+    """多个可折叠工具调用的汇总行。"""
 
 
     def __init__(self, count: int, total_elapsed: float, **kwargs: Any) -> None:
@@ -552,6 +560,12 @@ _ZeroCode_THEME = Theme(
 
 
 class ZeroCodeApp(App):
+    """ZeroCode 交互式 TUI 应用。
+
+    负责初始化模型 provider、工具注册表、Agent、session、技能、MCP、worktree
+    和团队系统，并把 AgentEvent 映射为聊天区组件更新。
+    """
+
     CSS_PATH = "styles.tcss"
     TITLE = "ZeroCode"
     INLINE_PADDING = 0

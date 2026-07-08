@@ -1,3 +1,9 @@
+"""Textual 终端驱动适配。
+
+该模块提供禁用 alternate screen 的驱动，让 TUI 渲染结果保留在主终端
+scrollback 中，便于用户回看历史输出。
+"""
+
 from __future__ import annotations
 
 import os

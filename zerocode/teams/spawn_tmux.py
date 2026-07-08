@@ -1,3 +1,8 @@
+"""基于 tmux pane 启动外部 teammate 进程。
+
+本模块封装 tmux 命令调用、ZeroCode CLI 启动命令构造，以及 pane 的发送和清理。
+"""
+
 from __future__ import annotations
 
 import logging

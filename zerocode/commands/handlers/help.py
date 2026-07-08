@@ -1,3 +1,8 @@
+"""实现 /help 命令。
+
+根据命令注册表展示全部可用命令，或输出单个命令的别名、用法和参数提示。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

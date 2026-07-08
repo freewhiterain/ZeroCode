@@ -4,6 +4,7 @@ import threading
 
 
 class AgentNameRegistry:
+    """线程安全初始化的单例名称注册表。"""
     _instance: AgentNameRegistry | None = None
     _lock = threading.Lock()
 

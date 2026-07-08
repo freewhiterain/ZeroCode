@@ -1,3 +1,8 @@
+"""实现 /memory 命令。
+
+提供记忆列表展示、清空和编辑路径提示，作为自动记忆管理的命令入口。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

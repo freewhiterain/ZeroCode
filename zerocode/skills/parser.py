@@ -1,3 +1,8 @@
+"""解析 Markdown Skill 定义文件。
+
+Skill 文件由 YAML frontmatter 与提示词正文组成；本模块负责校验名称、执行模式、
+上下文策略等元数据，并提供 $ARGUMENTS 参数替换工具。
+"""
 from __future__ import annotations
 
 import logging

@@ -1,3 +1,9 @@
+"""Git worktree 的创建、进入、退出与恢复管理。
+
+WorktreeManager 封装 git worktree 命令、快速 HEAD 读取、会话文件维护和安全清理，
+为 agent 提供隔离工作目录。
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -112,6 +118,7 @@ class WorktreeManager:
     # ------------------------------------------------------------------
 
     async def create(self, name: str, base_branch: str = "HEAD") -> Worktree:
+        """基于指定分支创建或快速恢复一个隔离 worktree。"""
         async with self._lock:
             err = validate_slug(name)
             if err:

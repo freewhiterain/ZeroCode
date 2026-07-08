@@ -1,3 +1,9 @@
+"""会话内文件编辑快照与回退支持。
+
+FileHistory 在每次编辑前保存文件备份，并在用户消息边界创建快照，允许按快照
+恢复已跟踪文件的历史内容。
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -12,6 +18,7 @@ MAX_SNAPSHOTS = 100
 
 @dataclass
 class Backup:
+    """单个文件某一版本备份的元数据。"""
     backup_path: str
     version: int
     timestamp: float
@@ -19,6 +26,7 @@ class Backup:
 
 @dataclass
 class Snapshot:
+    """某条用户消息之后可回退到的一组文件备份。"""
     message_index: int
     user_text: str
     backups: dict[str, Backup] = field(default_factory=dict)
@@ -27,6 +35,7 @@ class Snapshot:
 
 class FileHistory:
 
+    """按会话维护文件备份、快照列表和回退操作。"""
     def __init__(self, base_dir: str, session_id: str) -> None:
         self._session_dir = Path(base_dir) / ".ZeroCode" / "file-history" / session_id
         self._session_dir.mkdir(parents=True, exist_ok=True)
@@ -39,6 +48,7 @@ class FileHistory:
         return f"{h}@v{version}"
 
     def track_edit(self, path: str) -> None:
+        """在文件被修改前记录一个新版本备份。"""
         with self._lock:
             abs_path = str(Path(path).resolve())
             ver = self._tracked.get(abs_path, 0)
@@ -86,6 +96,7 @@ class FileHistory:
             return len(self._snapshots) > 0
 
     def rewind(self, snapshot_index: int) -> list[str]:
+        """将已跟踪文件恢复到指定快照记录的备份版本。"""
         with self._lock:
             if snapshot_index < 0 or snapshot_index >= len(self._snapshots):
                 return []

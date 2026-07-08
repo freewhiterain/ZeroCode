@@ -1,3 +1,8 @@
+"""实现 /clear 命令。
+
+负责关闭当前会话、创建新会话、重置对话与 Agent 状态，并刷新界面。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType

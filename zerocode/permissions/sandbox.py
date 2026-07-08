@@ -1,3 +1,9 @@
+"""文件路径沙箱检查。
+
+PathSandbox 将相对路径锚定到项目根目录，并在解析符号链接后确认
+访问目标位于允许根目录内，防止文件工具越权读写项目外路径。
+"""
+
 from __future__ import annotations
 
 import tempfile

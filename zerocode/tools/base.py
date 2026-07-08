@@ -1,3 +1,10 @@
+"""工具基础类型与流式事件定义模块。
+
+本模块定义所有工具共享的 Tool 抽象基类、ToolResult 返回结构、工具分类、
+输出限制常量，以及 LLM 流式响应过程中使用的事件数据结构。
+具体工具通过继承 Tool 并实现 execute 方法接入统一调用协议。
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -13,6 +20,7 @@ MAX_OUTPUT_CHARS = 10000
 ToolCategory = Literal["read", "write", "command"]
 
 
+# 所有工具统一返回该结构，is_error 用于区分正常输出和可恢复错误。
 @dataclass
 class ToolResult:
     output: str

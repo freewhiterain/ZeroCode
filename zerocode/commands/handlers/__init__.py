@@ -1,3 +1,9 @@
+"""内置斜杠命令处理器集合。
+
+本模块汇总默认启用的命令对象，并提供一次性注册函数，供应用
+启动时把内置命令装载到命令注册表中。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.handlers.clear import CLEAR_COMMAND

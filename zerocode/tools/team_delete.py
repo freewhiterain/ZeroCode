@@ -1,3 +1,10 @@
+"""团队删除工具模块。
+
+本模块实现 TeamDelete 工具，用于删除已有 Agent 团队并清理相关资源。
+执行过程委托 TeamManager 完成终止成员、移除工作区和清理邮箱等操作，
+并在协调模式下恢复父 Agent 的完整工具注册表。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,10 +18,12 @@ if TYPE_CHECKING:
     from zerocode.teams.manager import TeamManager
 
 
+# 删除团队只需要团队名称，实际清理细节由 TeamManager 封装。
 class TeamDeleteParams(BaseModel):
     team_name: str
 
 
+# 团队删除工具：清理团队资源，并在需要时退出父 Agent 的协调模式。
 class TeamDeleteTool(Tool):
     name = "TeamDelete"
     description = (

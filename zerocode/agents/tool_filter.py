@@ -1,3 +1,8 @@
+"""Agent 工具权限过滤逻辑。
+
+根据 agent 来源、后台执行模式、团队协作模式和定义中的白名单/黑名单，
+从父级工具注册表派生出当前 agent 实际可调用的工具集合。
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any

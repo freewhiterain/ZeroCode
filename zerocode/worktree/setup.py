@@ -1,3 +1,9 @@
+"""新建 worktree 后的本地环境同步。
+
+负责复制本地配置、复用 Git hooks、创建指定符号链接，并按 .worktreeinclude 复制
+必要的 ignored 文件。
+"""
+
 from __future__ import annotations
 
 import fnmatch
@@ -20,6 +26,7 @@ def perform_post_creation_setup(
     wt_path: str,
     symlink_directories: list[str] | None = None,
 ) -> None:
+    """在 git worktree 创建成功后同步本地运行所需的非源码环境。"""
     root = Path(repo_root)
     wt = Path(wt_path)
 

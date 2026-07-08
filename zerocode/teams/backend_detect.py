@@ -1,3 +1,9 @@
+"""团队 teammate 后端检测逻辑。
+
+默认使用 in-process 后端以支持实时进度；当显式请求 pane 模式时，可检测 tmux
+或 iTerm2 作为外部进程承载方式。
+"""
+
 from __future__ import annotations
 
 import os

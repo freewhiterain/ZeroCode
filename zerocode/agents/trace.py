@@ -1,3 +1,8 @@
+"""Agent 调用链路追踪。
+
+维护每个 agent 节点的父子关系、trace 标识、状态和 token 统计，便于汇总
+一次任务中主 agent 与子 agent 的执行情况。
+"""
 from __future__ import annotations
 
 import time

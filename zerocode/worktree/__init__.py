@@ -1,3 +1,8 @@
+"""Git worktree 子系统的公共导出入口。
+
+集中暴露 worktree 创建、会话持久化、变更统计和过期清理相关能力。
+"""
+
 from zerocode.worktree.changes import (
     Changes,
     CleanupResult,

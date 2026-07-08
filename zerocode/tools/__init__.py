@@ -1,3 +1,10 @@
+"""工具注册表与默认工具装配模块。
+
+本模块维护运行时可用工具集合，负责工具注册、启停、延迟工具发现、
+按协议输出 schema，以及创建默认的文件读写、编辑、命令和搜索工具。
+注册表是 Agent 与各工具实例之间的统一入口。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -8,6 +15,7 @@ if TYPE_CHECKING:
     from zerocode.cache import FileCache
 
 
+# 工具注册表：集中管理工具实例、禁用状态和延迟工具的发现状态。
 class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, Tool] = {}

@@ -1,3 +1,8 @@
+"""团队协作的数据模型与持久化路径工具。
+
+包含团队、成员、后端类型的 dataclass 定义，以及团队目录命名和配置文件读写逻辑。
+"""
+
 from __future__ import annotations
 
 import json

@@ -1,3 +1,10 @@
+"""LLM provider 客户端适配层。
+
+将 Anthropic、OpenAI Responses API 与 OpenAI 兼容 Chat Completions API
+统一为 LLMClient.stream 事件流，并把各 SDK 的认证、限流、网络错误转换为
+ZeroCode 内部异常类型，供 Agent 和 UI 层一致处理。
+"""
+
 from __future__ import annotations
 
 import json
@@ -114,6 +121,7 @@ class LLMClient(ABC):
 
 
 def _supports_adaptive_thinking(model: str) -> bool:
+    """判断 Claude 4 后续版本是否支持 budget_tokens=0 的自适应 thinking。"""
     for family in ("claude-opus-4-", "claude-sonnet-4-"):
         if model.startswith(family):
             rest = model[len(family):]
@@ -558,6 +566,7 @@ class OpenAICompatClient(LLMClient):
 
 
 def create_client(config: ProviderConfig) -> LLMClient:
+    """根据 provider protocol 创建对应的 LLMClient 实例。"""
     if config.protocol == "anthropic":
         return AnthropicClient(config)
     elif config.protocol == "openai":

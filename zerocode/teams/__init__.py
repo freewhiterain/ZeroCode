@@ -1,3 +1,9 @@
+"""团队协作子系统的公共导出入口。
+
+集中暴露团队模型、信箱、任务存储、名称注册表和进度对象，减少调用方对
+内部模块布局的依赖。
+"""
+
 from zerocode.teams.mailbox import Mailbox, MailboxMessage, create_message
 from zerocode.teams.models import (
     AgentTeam,

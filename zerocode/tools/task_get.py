@@ -1,3 +1,10 @@
+"""共享任务详情工具模块。
+
+本模块实现 TaskGet 工具，用于根据任务 ID 获取团队任务的完整详情。
+返回内容覆盖标题、状态、负责人、创建者、描述以及阻塞/被阻塞依赖，
+适合在多 Agent 协作中查看单个任务的上下文。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,6 +17,7 @@ if TYPE_CHECKING:
     from zerocode.teams.manager import TeamManager
 
 
+# 详情查询入参：通过任务 ID 定位团队任务看板中的单个任务。
 class TaskGetParams(BaseModel):
     task_id: str
 

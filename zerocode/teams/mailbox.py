@@ -1,3 +1,9 @@
+"""基于文件系统的 teammate 消息信箱。
+
+每个 agent 拥有独立目录，消息以 JSON 文件写入、读取或消费，用于 team lead 与
+teammate 之间传递通知和控制消息。
+"""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +16,7 @@ from typing import Any
 
 @dataclass
 class MailboxMessage:
+    """信箱中的单条可序列化消息。"""
     id: str
     from_agent: str
     to_agent: str
@@ -29,6 +36,7 @@ class MailboxMessage:
 
 
 class Mailbox:
+    """按 agent_id 分目录存放消息文件的轻量信箱。"""
     def __init__(self, base_dir: str | Path) -> None:
         self._base_dir = Path(base_dir)
 

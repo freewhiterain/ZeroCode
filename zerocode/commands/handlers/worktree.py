@@ -1,3 +1,8 @@
+"""创建 /worktree Git Worktree 管理命令。
+
+封装创建、列出、进入、退出和查看当前 worktree 状态的子命令处理逻辑。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -8,6 +13,7 @@ if TYPE_CHECKING:
     from zerocode.worktree.manager import WorktreeManager
 
 
+# 工厂函数闭包持有 WorktreeManager，使命令处理器可以复用同一个管理实例。
 def create_worktree_command(manager: WorktreeManager) -> Command:
 
 

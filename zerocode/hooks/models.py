@@ -1,3 +1,9 @@
+"""Hook 配置与运行时上下文模型。
+
+这些 dataclass 描述 Hook 动作、执行结果、触发条件以及模板展开所需
+上下文，是加载器、执行器和引擎之间传递数据的统一结构。
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

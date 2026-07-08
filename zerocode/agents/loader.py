@@ -1,3 +1,9 @@
+"""Agent 定义加载器。
+
+负责按照项目级、用户级、内置级的优先级发现 Markdown 格式的 agent 定义，
+并在运行时提供按名称获取与热重载能力。这里只处理定义元数据和来源归属，
+不负责实际创建或执行 agent 实例。
+"""
 from __future__ import annotations
 
 import importlib.resources

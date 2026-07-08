@@ -1,3 +1,9 @@
+"""ZeroCode 命令行入口。
+
+负责解析启动参数、加载配置与 hooks，并根据运行模式进入交互式 TUI
+或一次性非交互执行流程。此模块只做应用装配，不承载具体 agent 推理逻辑。
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -77,6 +83,11 @@ def main() -> None:
 
 
 async def _run_prompt(config, permission_mode, hook_engine, prompt: str) -> None:
+    """执行 -p 非交互模式下的一次性 prompt。
+
+    这里手动装配与 TUI 模式等价的 client、权限检查器、工具注册表、
+    子 agent/团队管理器和会话对象，然后把最终文本输出到 stdout。
+    """
     from zerocode.agent import Agent
     from zerocode.client import create_client, resolve_context_window
     from zerocode.conversation import ConversationManager

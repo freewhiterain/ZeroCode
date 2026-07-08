@@ -1,3 +1,10 @@
+"""团队创建工具模块。
+
+本模块实现 TeamCreate 工具，用于创建可协作的 Agent 团队。
+关键流程包括检测适配的队友运行后端、创建团队配置、必要时开启
+协调模式并缩减父 Agent 可见工具，最后返回后续生成队友的使用提示。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,11 +18,13 @@ if TYPE_CHECKING:
     from zerocode.teams.manager import TeamManager
 
 
+# 创建团队的最小配置：团队名称必填，描述用于补充协作目标。
 class TeamCreateParams(BaseModel):
     team_name: str
     description: str = ""
 
 
+# 团队创建工具：初始化团队配置，并可将父 Agent 切换为协调模式。
 class TeamCreateTool(Tool):
     name = "TeamCreate"
     description = (

@@ -1,3 +1,9 @@
+"""worktree 与 agent 上下文集成辅助函数。
+
+用于生成隔离 worktree 名称，并构造提示文本提醒子 agent 将父目录路径映射到
+当前 worktree。
+"""
+
 from __future__ import annotations
 
 import secrets

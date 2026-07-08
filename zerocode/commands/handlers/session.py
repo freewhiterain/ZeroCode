@@ -1,9 +1,15 @@
+"""实现 /session 命令。
+
+负责当前会话概览、会话列表、恢复、新建和删除等持久化会话管理操作。
+"""
+
 from __future__ import annotations
 
 from zerocode.commands.registry import Command, CommandContext, CommandType
 from zerocode.conversation import ConversationManager
 
 
+# 会话命令的分发入口：先解析子命令，再分别处理查看、恢复、新建和删除。
 async def handle_session(ctx: CommandContext) -> None:
     sm = ctx.session_manager
     if sm is None:

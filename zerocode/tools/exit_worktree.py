@@ -1,3 +1,10 @@
+"""退出隔离工作区工具模块。
+
+本模块实现 ExitWorktree 工具，用于离开由 EnterWorktree 创建的当前
+工作区会话。删除工作区前会检查未提交文件和新增提交，避免在未确认
+discard_changes 的情况下永久丢弃用户工作。
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
@@ -11,6 +18,7 @@ if TYPE_CHECKING:
     from zerocode.worktree.manager import WorktreeManager
 
 
+# 退出工作区入参：action 决定保留还是删除，discard_changes 用于显式确认丢弃。
 class ExitWorktreeParams(BaseModel):
     action: str = Field(
         description='"keep" leaves the worktree and branch on disk; "remove" deletes both.',

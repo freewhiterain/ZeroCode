@@ -1,3 +1,9 @@
+"""Hook 条件表达式解析与求值。
+
+支持相等、不等、正则和通配符匹配，并允许通过 && 或 || 组合多个
+条件，用于在 Hook 触发前根据上下文筛选是否执行。
+"""
+
 from __future__ import annotations
 
 import fnmatch
@@ -70,6 +76,7 @@ def _parse_single(expr: str) -> Condition:
     raise ConditionParseError(f"No valid operator found in condition: '{expr}'")
 
 
+# 解析单个条件表达式；当前实现刻意禁止混用 && 和 ||，避免优先级歧义。
 def parse_condition(expr: str) -> ConditionGroup | None:
     if not expr or not expr.strip():
         return None

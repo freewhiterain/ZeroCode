@@ -1,3 +1,9 @@
+"""命令系统的核心数据结构与注册表。
+
+这里定义命令类型、执行上下文、UI 协议以及注册表，供各个命令
+处理器统一声明、注册、查询和展示命令。
+"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,3 +1,4 @@
+"""后台任务完成通知的格式化与注入。"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

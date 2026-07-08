@@ -1,3 +1,10 @@
+"""子 Agent 启动工具模块。
+
+本模块实现 Agent 工具，用于启动一次性子 Agent、后台 Agent、隔离
+worktree Agent，或团队中的长驻队友。它负责解析 agent 定义、选择模型、
+过滤可用工具、配置权限沙箱、注册追踪信息，并根据运行模式分派执行。
+"""
+
 from __future__ import annotations
 
 import logging
@@ -17,6 +24,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+# Agent 启动入参：同时覆盖一次性子任务、后台运行、团队队友和模型覆盖场景。
 class AgentToolParams(BaseModel):
     prompt: str
     description: str
