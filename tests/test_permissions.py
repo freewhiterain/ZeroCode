@@ -238,7 +238,7 @@ class TestRuleEngine:
 
     def test_append_local_rule(self) -> None:
         tmpdir = Path(tempfile.mkdtemp())
-        local_path = tmpdir / ".ZeroCode" / "permissions.local.yaml"
+        local_path = tmpdir / ".zerocode" / "permissions.local.yaml"
         engine = RuleEngine(local_rules_path=local_path)
         engine.append_local_rule(Rule(tool_name="Bash", pattern="git commit *", effect="allow"))
         assert local_path.exists()
@@ -486,7 +486,7 @@ async def test_e2e_sandbox_blocks_outside_path():
 async def test_e2e_rule_allows_git():
     """放行 git 命令的规则可以让其无需人工介入（HITL）直接通过。"""
     tmpdir = Path(tempfile.mkdtemp())
-    rules_file = tmpdir / ".ZeroCode" / "permissions.yaml"
+    rules_file = tmpdir / ".zerocode" / "permissions.yaml"
     rules_file.parent.mkdir(parents=True)
     rules_file.write_text(yaml.dump([{"rule": "Bash(git *)", "effect": "allow"}]))
 

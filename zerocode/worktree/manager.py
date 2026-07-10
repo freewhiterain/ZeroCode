@@ -44,9 +44,9 @@ class WorktreeManager:
         self.repo_root = repo_root
         self.symlink_directories = symlink_directories or []
         self.worktree_dir = worktree_dir or str(
-            Path(repo_root) / ".ZeroCode" / "worktrees"
+            Path(repo_root) / ".zerocode" / "worktrees"
         )
-        self._ZeroCode_dir = Path(repo_root) / ".ZeroCode"
+        self._ZeroCode_dir = Path(repo_root) / ".zerocode"
         self._lock = asyncio.Lock()
         self.active: dict[str, Worktree] = {}
         self.current_session: WorktreeSession | None = None

@@ -39,6 +39,10 @@ from zerocode.tools.base import (
 ANTHROPIC_MODEL_FETCH_TIMEOUT = 3.0
 
 
+# 【讲解】prompt cache（提示词缓存）背景知识：发给模型的内容里，system prompt、
+# 工具列表和对话前缀每轮几乎不变。Anthropic 允许在内容里打"缓存断点"
+# （cache_control 标记），下一轮请求若断点前的内容逐字节相同，这部分只收 10%
+# 的费用。下面两个 _mark_* 函数就是在合适的位置打断点。
 _EPHEMERAL = {"type": "ephemeral"}
 
 
@@ -107,6 +111,17 @@ class NetworkError(LLMError):
 
 
 class LLMClient(ABC):
+    """【讲解】所有 LLM 客户端的统一接口——典型的"适配器模式"。
+
+    三家 API（Anthropic / OpenAI Responses / OpenAI 兼容）的请求格式、流式
+    事件、错误类型各不相同。本文件为每家写一个适配器类，把差异全部消化在
+    stream() 内部，对外只吐统一的 StreamEvent（见 tools/base.py）。
+    这样 agent.py 完全不用关心背后接的是哪家模型。
+
+    读法建议：三个子类的 stream() 结构雷同（组装请求 → 逐事件翻译 → 统一
+    抛错），精读 AnthropicClient 一个即可，其余两个扫一眼差异。
+    """
+
     @abstractmethod
     async def stream(
         self,
@@ -205,6 +220,10 @@ class AnthropicClient(LLMClient):
                     "budget_tokens": max(self.max_output_tokens - 1, 1024),
                 }
 
+        # 【讲解】流式解析的状态变量。Anthropic 的流按"内容块"组织：
+        # content_block_start → 若干 delta → content_block_stop。工具调用的参数
+        # JSON 是一小段一小段流回来的，必须先攒在 json_accum 里，等块结束时才能
+        # json.loads 解析成 dict。thinking 块同理。
         current_tool_name = ""
         current_tool_id = ""
         json_accum = ""
@@ -213,6 +232,9 @@ class AnthropicClient(LLMClient):
         thinking_signature = ""
 
         try:
+            # 【讲解】`async with` 管理流的生命周期，`async for` 逐事件消费。
+            # 下面的 if/elif 链就是"翻译器"：把 Anthropic 的事件类型逐一映射成
+            # ZeroCode 自己的 StreamEvent。
             async with self._client.messages.stream(**kwargs) as stream:
                 async for event in stream:
                     if event.type == "content_block_start":
@@ -276,6 +298,9 @@ class AnthropicClient(LLMClient):
                     ) or 0,
                 )
 
+        # 【讲解】错误转换：把 SDK 的异常类型换成 ZeroCode 自己定义的异常
+        # （文件顶部的 LLMError 家族）。`raise ... from e` 保留原始异常链便于排查。
+        # 好处：上层代码只需 except LLMError，不用知道底下是哪家 SDK。
         except _anthropic.AuthenticationError as e:
             raise AuthenticationError(f"Invalid API key: {e}") from e
         except _anthropic.RateLimitError as e:

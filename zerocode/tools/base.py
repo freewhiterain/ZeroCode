@@ -28,6 +28,24 @@ class ToolResult:
 
 
 class Tool(ABC):
+    """【讲解】所有工具的抽象基类（ABC = Abstract Base Class）。
+
+    "工具"就是模型可以请求执行的一个能力（读文件、跑命令……）。每个具体
+    工具只需继承本类、填好几个类属性、实现 execute() 方法，就自动接入了
+    整个调用体系（schema 上报给模型 → 权限检查 → 参数校验 → 执行）。
+    想看最简单的例子可以读 tools/glob.py，三十几行就是一个完整工具。
+
+    各属性含义：
+      name / description — 上报给 LLM 的工具名和说明书，模型靠它决定何时调用。
+      params_model — 一个 pydantic 模型类，声明参数的名字和类型；既用来给
+        模型生成 JSON Schema，也用来校验模型实际传来的参数。
+      category — read/write/command 三类，权限系统按类别决定"放行/询问/拒绝"。
+      is_concurrency_safe — 是否允许和其他工具并行执行（只读工具才安全）。
+      is_system_tool — 系统内部工具（如 ExitPlanMode），不受常规启停控制。
+      should_defer — "延迟工具"：启动时只上报名字不上报 schema，省 token，
+        模型需要时先用 ToolSearch 加载（你所在的 Claude Code 也是这个机制）。
+    """
+
     name: str
     description: str
     params_model: type[BaseModel]
@@ -42,6 +60,8 @@ class Tool(ABC):
 
 
     def get_schema(self) -> dict[str, Any]:
+        # 【讲解】把 pydantic 参数模型自动转成 JSON Schema，随 API 请求发给
+        # 模型——模型就是靠这份"参数说明书"知道该怎么填参数的。
         schema = self.params_model.model_json_schema()
         schema.pop("title", None)
         return {
@@ -50,11 +70,17 @@ class Tool(ABC):
             "input_schema": schema,
         }
 
+    # 【讲解】@abstractmethod 表示子类必须实现这个方法，否则实例化时报错。
+    # `...` 是占位符（等于 pass）。每个工具的全部本领都写在自己的 execute 里。
     @abstractmethod
     async def execute(self, params: BaseModel) -> ToolResult: ...
 
 
 # --- 流式事件 ---
+# 【讲解】下面是"底层流事件"（StreamEvent），描述 LLM 响应流里的原始片段，
+# 由 client.py 产生、agent.py 的 StreamCollector 消费。注意和 agent.py 里的
+# AgentEvent 区分：StreamEvent 是"API 层的原材料"，AgentEvent 是"加工后给 UI
+# 的成品"。命名规律：XxxDelta = 增量小片段，XxxComplete = 拼装完成的整块。
 
 
 @dataclass

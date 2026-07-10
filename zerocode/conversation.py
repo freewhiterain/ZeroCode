@@ -36,6 +36,19 @@ class ThinkingBlock:
 
 @dataclass
 class Message:
+    """【讲解】ZeroCode 内部统一的消息格式——整个对话历史就是 list[Message]。
+
+    设计要点：它不照搬任何一家 LLM API 的格式，而是自定义一个"最大公约数"
+    结构，发请求前再由 serialization.py 翻译成 Anthropic / OpenAI 各家的格式。
+    这样换 provider 时对话历史不用动。
+    一条消息可以同时携带：正文文本、模型的工具调用请求（tool_uses）、
+    工具执行结果（tool_results）、思考过程（thinking_blocks）。
+
+    语法点：list 这类可变类型不能直接写 `= []` 当默认值（所有实例会共享同
+    一个列表，经典 Python 坑），所以用 field(default_factory=list) 让每个
+    实例各自新建一个空列表。
+    """
+
     role: str  # "user" | "assistant"
     content: str
     tool_uses: list[ToolUseBlock] = field(default_factory=list)
@@ -72,6 +85,14 @@ def estimate_tokens(messages: list[Message]) -> int:
 
 @dataclass
 class ConversationManager:
+    """【讲解】对话历史的"账本"。两大职责：
+
+    1. 记账：提供 add_user_message / add_assistant_message / add_tool_results_message
+       等方法往 history 里追加消息，以及注入环境上下文和长期记忆。
+    2. 算账：current_tokens() 估算当前对话占用了多少 token，供"该不该压缩"
+       的判断使用。这里用了一个聪明的"锚点"机制——见 record_usage_anchor。
+    """
+
     history: list[Message] = field(default_factory=list)
     env_injected: bool = field(default=False, init=False)
     ltm_injected: bool = field(default=False, init=False)
@@ -138,7 +159,13 @@ class ConversationManager:
         )
 
     def add_system_reminder(self, content: str) -> None:
-        """以 user 消息形式追加系统提醒，保持各 provider 的兼容性。"""
+        """以 user 消息形式追加系统提醒，保持各 provider 的兼容性。
+
+        【讲解】"系统提醒"是程序（而非真人）想对模型说的话，比如"你收到了
+        队友消息"、"计划模式规则如下"。LLM API 的对话里只有 user/assistant
+        两种角色，所以借用 user 角色，用 <system-reminder> 标签包起来让模型
+        知道这不是用户本人说的。你在 Claude Code 里看到的同名标签就是这个思路。
+        """
         self.history.append(
             Message(
                 role="user",
@@ -153,6 +180,10 @@ class ConversationManager:
 
 
     def inject_environment(self, context: str) -> None:
+        # 【讲解】把环境信息（工作目录、平台、可用技能列表等）插到对话最开头
+        # 的固定位置。放开头有两个原因：① 模型最先看到；② 位置固定不变才能
+        # 命中 prompt cache（见 client.py 的缓存注释）。env_injected 标记保证
+        # 只插一次。
         if not self.env_injected:
             self.history.insert(0, Message(role="user", content=context))
             self.env_injected = True

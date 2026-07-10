@@ -101,7 +101,7 @@ MAX_AT_REF_BYTES = 10240
 
 _AT_REF_RE = re.compile(r"@([\w./_\-]+(?:\.[\w]+)*)")
 
-_SKIP_DIRS = {".git", "node_modules", ".venv", "__pycache__", ".ZeroCode", "build", ".gradle"}
+_SKIP_DIRS = {".git", "node_modules", ".venv", "__pycache__", ".zerocode", "build", ".gradle"}
 
 
 def scan_files_for_at(prefix: str, work_dir: str, limit: int = 10) -> list[str]:
@@ -170,7 +170,7 @@ class ChatInput(TextArea):
         self._history_file: Path | None = None
 
     def load_history(self, work_dir: str) -> None:
-        self._history_file = Path(work_dir) / ".ZeroCode" / "history"
+        self._history_file = Path(work_dir) / ".zerocode" / "history"
         if self._history_file.exists():
             try:
                 lines = self._history_file.read_text(encoding="utf-8").splitlines()
@@ -699,9 +699,9 @@ class ZeroCodeApp(App):
             detector=DangerousCommandDetector(),
             sandbox=PathSandbox(work_dir),
             rule_engine=RuleEngine(
-                user_rules_path=home / ".ZeroCode" / "permissions.yaml",
-                project_rules_path=Path(work_dir) / ".ZeroCode" / "permissions.yaml",
-                local_rules_path=Path(work_dir) / ".ZeroCode" / "permissions.local.yaml",
+                user_rules_path=home / ".zerocode" / "permissions.yaml",
+                project_rules_path=Path(work_dir) / ".zerocode" / "permissions.yaml",
+                local_rules_path=Path(work_dir) / ".zerocode" / "permissions.local.yaml",
             ),
             mode=self._initial_permission_mode,
         )

@@ -52,8 +52,10 @@ def load_instructions(project_root: str) -> str:
 
     paths = [
         root / "ZeroCode.md",
-        root / ".ZeroCode" / "ZeroCode.md",
-        home / ".ZeroCode" / "ZeroCode.md",
+        # 注：这里的目录段统一成小写 .zerocode（与其他子系统一致）；
+        # "ZeroCode.md" 文件名本身的大小写是另一个独立问题，不在本次改动范围内。
+        root / ".zerocode" / "ZeroCode.md",
+        home / ".zerocode" / "ZeroCode.md",
     ]
 
     sections: list[str] = []

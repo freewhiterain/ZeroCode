@@ -64,7 +64,7 @@ class MemoryManager:
         live. Distinct from ``user_path`` which points at the flat
         ``memories.md`` file.
         """
-        return Path.home() / ".ZeroCode" / "memory"
+        return Path.home() / ".zerocode" / "memory"
 
     @property
     def project_mem_dir(self) -> Path:

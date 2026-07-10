@@ -237,9 +237,9 @@ def load_config(path: Path | None = None) -> AppConfig:
     cwd = Path.cwd()
     home = Path.home()
     candidates = [
-        home / ".ZeroCode" / "config.yaml",
-        cwd / ".ZeroCode" / "config.yaml",
-        cwd / ".ZeroCode" / "config.local.yaml",
+        home / ".zerocode" / "config.yaml",
+        cwd / ".zerocode" / "config.yaml",
+        cwd / ".zerocode" / "config.local.yaml",
     ]
 
     merged: AppConfig | None = None

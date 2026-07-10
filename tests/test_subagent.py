@@ -204,7 +204,7 @@ class TestAgentLoader:
         assert "Verification" in agents
 
     def test_project_overrides_builtin(self, tmp_path: Path):
-        agents_dir = tmp_path / ".ZeroCode" / "agents"
+        agents_dir = tmp_path / ".zerocode" / "agents"
         agents_dir.mkdir(parents=True)
         custom_md = make_agent_md(
             name="Explore",
@@ -240,7 +240,7 @@ class TestAgentLoader:
         assert "general-purpose" in names
 
     def test_hot_reload(self, tmp_path: Path):
-        agents_dir = tmp_path / ".ZeroCode" / "agents"
+        agents_dir = tmp_path / ".zerocode" / "agents"
         agents_dir.mkdir(parents=True)
         f = agents_dir / "custom.md"
         f.write_text(make_agent_md(name="custom", description="v1"))
@@ -253,7 +253,7 @@ class TestAgentLoader:
         assert loader.get("custom").when_to_use == "v2"
 
     def test_bad_file_skipped(self, tmp_path: Path):
-        agents_dir = tmp_path / ".ZeroCode" / "agents"
+        agents_dir = tmp_path / ".zerocode" / "agents"
         agents_dir.mkdir(parents=True)
         (agents_dir / "bad.md").write_text("no frontmatter")
         (agents_dir / "good.md").write_text(

@@ -387,6 +387,37 @@ async def test_token_usage_accumulates():
     assert c["usage"][2].output_tokens == 230
 
 @pytest.mark.asyncio
+async def test_run_to_completion_external_conversation_survives_compact(monkeypatch):
+    """回归测试：调用方自带 conversation 时，压缩事件不应导致 env_context 未定义崩溃。
+
+    run_to_completion 此前只在 `conversation is None`（自己新建对话）的分支里
+    创建 env_context，但压缩触发的分支（inject_environment(env_context)）在循环
+    里无条件执行。如果调用方自己传入 conversation（例如 -p 非交互模式、子 agent、
+    teammate 场景），env_context 从未被赋值，一旦触发压缩就会 UnboundLocalError。
+    这里用 monkeypatch 让 auto_compact 立刻返回压缩事件，跳过构造真实超长对话
+    历史的麻烦，直接命中这条代码路径。
+    """
+    from zerocode import agent as agent_module
+
+    async def fake_auto_compact(conversation, client, context_window, session_dir, **kwargs):
+        return agent_module.CompactEvent(before_tokens=999)
+
+    monkeypatch.setattr(agent_module, "auto_compact", fake_auto_compact)
+
+    client = MockLLMClient([
+        [TextDelta(text="Done."), StreamEnd(stop_reason="end_turn", input_tokens=1, output_tokens=1)],
+    ])
+    registry = create_default_registry()
+    agent = Agent(client, registry, "anthropic", work_dir=".")
+
+    conv = ConversationManager()
+    conv.add_user_message("hello")  # 调用方自带对话，走的不是 conversation is None 分支
+
+    result = await agent.run_to_completion("continue", conversation=conv)
+    assert result == "Done."
+
+
+@pytest.mark.asyncio
 async def test_plan_mode():
     """通过 permission_mode 切换 plan 模式。"""
     from zerocode.permissions import PermissionMode

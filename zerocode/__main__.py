@@ -17,10 +17,15 @@ from zerocode.config import ConfigError, load_config
 from zerocode.hooks import HookConfigError, HookEngine, load_hooks
 from zerocode.permissions import PermissionMode
 
+log = logging.getLogger(__name__)
+
 
 def main() -> None:
+    # 【讲解】程序入口（pyproject.toml 里 `zerocode = "zerocode.__main__:main"`
+    # 把它注册成了命令）。流程：建日志目录 → 解析命令行参数 → 加载配置 →
+    # 加载 hooks → 二选一：带 -p 参数走一次性非交互模式，否则启动 Textual TUI。
     # 先确保 .zerocode/ 目录存在，否则下面写 debug.log 会因目录不存在而崩溃
-    Path(".ZeroCode").mkdir(parents=True, exist_ok=True)
+    Path(".zerocode").mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(name)s %(message)s",
@@ -64,6 +69,8 @@ def main() -> None:
         asyncio.run(_run_prompt(config, permission_mode, hook_engine, args.p))
         return
 
+    # 【讲解】把 import 放在函数体内（而不是文件顶部）是刻意的：app.py 及其
+    # 依赖的 Textual 很重，-p 非交互模式根本用不到它们，延迟导入能加快启动。
     from zerocode.app import ZeroCodeApp
     from zerocode.driver import NoAltScreenDriver
 
@@ -123,9 +130,9 @@ async def _run_prompt(config, permission_mode, hook_engine, prompt: str) -> None
         detector=DangerousCommandDetector(),
         sandbox=PathSandbox(work_dir),
         rule_engine=RuleEngine(
-            user_rules_path=home / ".ZeroCode" / "permissions.yaml",
-            project_rules_path=Path(work_dir) / ".ZeroCode" / "permissions.yaml",
-            local_rules_path=Path(work_dir) / ".ZeroCode" / "permissions.local.yaml",
+            user_rules_path=home / ".zerocode" / "permissions.yaml",
+            project_rules_path=Path(work_dir) / ".zerocode" / "permissions.yaml",
+            local_rules_path=Path(work_dir) / ".zerocode" / "permissions.local.yaml",
         ),
         mode=permission_mode,
     )
@@ -199,17 +206,24 @@ async def _run_prompt(config, permission_mode, hook_engine, prompt: str) -> None
     if not team_manager._teams:
         return
 
-    import sys
+    # 【讲解】-p 模式下如果创建了团队，这里轮询等待 teammate 完成任务。
+    # 原来这段用 print(..., file=sys.stderr) 输出调试信息（每 2 秒打一行），
+    # 属于开发调试时留下的痕迹；改成 log.debug 写入 .zerocode/debug.log，
+    # 不再直接污染用户看到的 stderr 输出，需要排查时翻日志文件即可。
     for i in range(90):
         await asyncio.sleep(2)
         running = {k: not t.done() for k, t in task_manager._async_tasks.items()}
         completed_ids = [t.id for t in task_manager._tasks.values() if t.status != "running"]
-        print(f"[poll {i}] running={running} completed={completed_ids} teams={list(team_manager._teams.keys())} queue_size={task_manager._notify_queue.qsize()}", file=sys.stderr, flush=True)
+        log.debug(
+            "[poll %d] running=%s completed=%s teams=%s queue_size=%d",
+            i, running, completed_ids, list(team_manager._teams.keys()),
+            task_manager._notify_queue.qsize(),
+        )
         notes = drain_notifications()
         if not notes:
             has_running = any(v for v in running.values())
             if not has_running:
-                print(f"[poll {i}] no running tasks, breaking", file=sys.stderr, flush=True)
+                log.debug("[poll %d] no running tasks, breaking", i)
                 break
             continue
         for note in notes:

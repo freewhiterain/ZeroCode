@@ -61,6 +61,13 @@ from zerocode.tools.base import (
 
 log = logging.getLogger(__name__)
 
+# 【讲解】三个"保护性"常量，都是为了防止 agent 失控：
+#   MEMORY_EXTRACTION_INTERVAL — 每完成 5 轮对话，后台悄悄跑一次"记忆提取"
+#     （让 LLM 总结值得长期记住的信息，写进记忆文件）。
+#   MAX_TOKENS_CEILING — 当模型输出被 max_tokens 截断时，把输出上限一次性
+#     提到 64000，避免反复被截断。
+#   MAX_OUTPUT_TOKENS_RECOVERIES — 提高上限后如果还是被截断，最多再"接着写"
+#     3 次，防止无限循环烧钱。
 MEMORY_EXTRACTION_INTERVAL = 5
 MAX_TOKENS_CEILING = 64000
 MAX_OUTPUT_TOKENS_RECOVERIES = 3
@@ -69,9 +76,20 @@ MAX_OUTPUT_TOKENS_RECOVERIES = 3
 # ---------------------------------------------------------------------------
 # AgentEvent 事件类型
 # ---------------------------------------------------------------------------
+# 【讲解】这是整个项目最核心的设计决定：Agent 不直接操作界面，而是把运行中
+# 发生的每件事包装成一个"事件对象"往外扔（yield），由外层（TUI 界面或命令行）
+# 决定怎么展示。好处是 Agent 逻辑和界面完全解耦——同一个 Agent 既能驱动
+# 交互式界面，也能跑非交互模式，还能当子 agent 用。
+#
+# 下面每个 @dataclass 就是一种事件。@dataclass 是 Python 的语法糖：写上字段名
+# 和类型，它自动帮你生成 __init__、__repr__ 等方法，省去样板代码。
+# 例如 StreamText(text="hi") 就创建了一个"模型输出了一段文本"的事件。
+
 
 @dataclass
 class StreamText:
+    # 【讲解】模型流式输出的一小段正文文本（可能只有几个字），UI 收到后立刻追加显示，
+    # 这就是打字机效果的来源。
     text: str
 
 
@@ -148,11 +166,20 @@ class PermissionResponse(Enum):
 
 @dataclass
 class PermissionRequest:
+    # 【讲解】这是最巧妙的一个事件："Agent 想执行某个工具，但需要用户点头"。
+    # 关键在 future 字段：asyncio.Future 相当于一个"等待填写的答案栏"。
+    # 流程是——Agent 把这个事件 yield 给 UI 后就停在 `await future` 上睡觉；
+    # UI 弹出权限对话框，用户选了之后调用 future.set_result(答案)，
+    # Agent 立刻苏醒并继续执行。这样异步代码就实现了"暂停等待用户输入"。
     tool_name: str
     description: str
     future: asyncio.Future[PermissionResponse]
 
 
+# 【讲解】AgentEvent 是一个"联合类型"（union type）：竖线 | 表示"或"。
+# 意思是：凡是标注为 AgentEvent 的变量，可能是上面 12 种事件中的任意一种。
+# 消费方（UI 层）拿到事件后用 isinstance(event, StreamText) 这样的判断来分流处理。
+# 这是 Python 里实现"事件分发"的常见模式。
 AgentEvent = (
     StreamText
     | ThinkingText
@@ -192,12 +219,23 @@ class LLMResponse:
 
 
 class StreamCollector:
+    """【讲解】流式响应的"边转发边攒"收集器。
+
+    LLM 的回复是一小段一小段流回来的（StreamEvent）。这个类做两件事：
+      1. 转发：把文本片段实时转成 AgentEvent 往上抛，让 UI 立刻显示；
+      2. 累积：同时把所有片段拼装进 self.response（LLMResponse），
+         等流结束后，Agent 就能拿到完整的回复文本、工具调用列表和 token 用量。
+    也就是"用户实时看到的"和"程序后续处理用的"两份数据一次遍历同时产出。
+    """
+
     def __init__(self) -> None:
         self.response = LLMResponse()
 
     async def consume(
         self, stream: AsyncIterator[StreamEvent]
     ) -> AsyncIterator[AgentEvent]:
+        # 【讲解】`async for` 逐个取出底层 client 产生的流事件；isinstance 链
+        # 按事件类型分流。注意有的分支 yield（转发给 UI），有的只默默累积。
         async for event in stream:
             if isinstance(event, TextDelta):
                 self.response.text += event.text
@@ -241,7 +279,13 @@ def partition_tool_calls(
     tool_calls: list[ToolCallComplete],
     registry: ToolRegistry,
 ) -> list[ToolBatch]:
-    """按工具并发安全性把同一轮 tool calls 切分为执行批次。"""
+    """按工具并发安全性把同一轮 tool calls 切分为执行批次。
+
+    【讲解】模型一轮可能同时请求多个工具（比如连读 3 个文件）。只读类工具
+    （标记了 is_concurrency_safe）可以并行跑提速；写文件、跑命令这类必须
+    串行。这里的算法是"贪心分组"：顺序扫描，把连续的安全工具归进同一个
+    并行批次，遇到不安全的就单独成批。保持原始顺序不变。
+    """
     batches: list[ToolBatch] = []
     for tc in tool_calls:
         tool = registry.get(tc.tool_name)
@@ -255,7 +299,8 @@ def partition_tool_calls(
 
 
 # ---------------------------------------------------------------------------
-# streaming 执行器 — 在 LLM streaming 期间启动 tool 执行
+# 工具执行结果的内部载体（被下方 _execute_single_tool_direct /
+# _execute_batch_parallel 使用，承载并行批次执行的单个工具结果）
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -265,39 +310,6 @@ class _ToolExecResult:
     result: ToolResult
     elapsed: float
     is_unknown: bool
-
-
-class StreamingExecutor:
-    def __init__(self) -> None:
-        self._tasks: list[tuple[int, asyncio.Task[_ToolExecResult]]] = []
-        self._order = 0
-
-    def submit(
-        self,
-        coro: Any,
-    ) -> None:
-        task = asyncio.create_task(coro)
-        self._tasks.append((self._order, task))
-        self._order += 1
-
-    async def collect_results(self) -> list[_ToolExecResult]:
-        if not self._tasks:
-            return []
-        tasks = [t for _, t in sorted(self._tasks, key=lambda x: x[0])]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        out: list[_ToolExecResult] = []
-        for r in results:
-            if isinstance(r, Exception):
-                out.append(_ToolExecResult(
-                    tool_id="",
-                    tool_name="",
-                    result=ToolResult(output=f"Tool execution error: {r}", is_error=True),
-                    elapsed=0.0,
-                    is_unknown=False,
-                ))
-            else:
-                out.append(r)
-        return out
 
 
 # ---------------------------------------------------------------------------
@@ -366,7 +378,7 @@ class Agent:
     @property
     def _transcript_path(self) -> str:
         if self.session_id:
-            return str(Path(self.work_dir) / ".ZeroCode" / "sessions" / f"{self.session_id}.jsonl")
+            return str(Path(self.work_dir) / ".zerocode" / "sessions" / f"{self.session_id}.jsonl")
         return ""
 
     @property
@@ -386,7 +398,7 @@ class Agent:
         _NOUNS = ["sketch", "draft", "spark", "bloom", "trail", "ridge", "creek", "grove",
                   "cliff", "cloud", "field", "forge", "frost", "haven", "pearl", "stone",
                   "storm", "river", "tower", "delta", "flame", "orbit", "pulse", "shore"]
-        plans_dir = Path(self.work_dir) / ".ZeroCode" / "plans"
+        plans_dir = Path(self.work_dir) / ".zerocode" / "plans"
         plans_dir.mkdir(parents=True, exist_ok=True)
         ts = datetime.datetime.now().strftime("%m%d-%H%M")
         slug = f"{random.choice(_ADJECTIVES)}-{random.choice(_NOUNS)}-{ts}"
@@ -440,7 +452,23 @@ class Agent:
         ]
 
     async def run(self, conversation: ConversationManager) -> AsyncIterator[AgentEvent]:
+        # 【讲解】★ 整个项目的心脏 ★ —— 交互模式下的 Agent 主循环。
+        #
+        # 这是一个"异步生成器"（函数体里有 yield 的 async 函数）：它不是一次算完
+        # 返回结果，而是边运行边往外吐 AgentEvent 事件，UI 层用 `async for` 消费。
+        #
+        # 每次 while 循环 = 一次"LLM 请求-响应"回合，流程固定为：
+        #   ① 收邮件/后台通知 → 塞进对话历史
+        #   ② 检查上下文是否快满 → 快满就自动压缩（auto_compact）
+        #   ③ 组装 system prompt + 工具 schema 列表
+        #   ④ 调 LLM，流式转发它的输出
+        #   ⑤ 看响应：没有工具调用 → 任务完成，退出循环；
+        #      有工具调用 → 逐个做权限检查并执行，把结果写回对话历史，回到 ①
+        # 也就是说：模型"说话+要工具"，我们"执行+回报结果"，反复对话直到它不再要工具。
         self._current_conversation = conversation
+        # 【讲解】开场准备：把"环境上下文"（工作目录、可用 skill/agent 目录等）和
+        # "长期记忆"（ZEROCODE.md 项目指令 + 自动记忆）注入到对话最前面。
+        # inject_* 方法内部有防重复标记，多次调用只会注入一次。
         env_context = build_environment_context(
             self.work_dir, self.active_skills, self._skill_catalog, self._agent_catalog
         )
@@ -455,6 +483,11 @@ class Agent:
             for he in self._drain_hook_events():
                 yield he
 
+        # 【讲解】循环状态变量：
+        #   iteration — 当前是第几轮（防止无限循环，超过 max_iterations 强制停）
+        #   consecutive_unknown — 模型连续调用不存在的工具的次数（连续 3 次说明模型
+        #     已经"迷路"了，直接终止）
+        #   max_tokens_escalated / output_recoveries — 输出被截断后的补救计数
         iteration = 0
         consecutive_unknown = 0
         max_tokens_escalated = False
@@ -475,11 +508,18 @@ class Agent:
                 for he in self._drain_hook_events():
                     yield he
 
+            # 【讲解】步骤①：收消息。如果这个 agent 在团队里，从文件信箱取队友
+            # 发来的消息；notification_fn 则用来拉取后台子任务的完成通知。
+            # 都以"user 消息/系统提醒"的形式塞进对话，让模型下一轮能看到。
             self._consume_mailbox(conversation)
             if self.notification_fn:
                 for note in self.notification_fn():
                     conversation.add_system_reminder(note)
 
+            # 【讲解】步骤②：上下文管理。对话太长会超出模型的 context window，
+            # 项目用两层防御（Layer 1/Layer 2 的叫法在下面还会出现）：
+            #   Layer 1 = 把巨大的旧工具输出替换成"已存盘"占位符（不动原始历史）
+            #   Layer 2 = 整段对话让 LLM 做摘要压缩（重写历史，只保留摘要+尾部）
             # Layer 2: 接近 context window 上限时自动 compact（操作原始对话）
             compact_result = await auto_compact(
                 conversation,
@@ -512,6 +552,8 @@ class Agent:
                 for he in self._drain_hook_events():
                     yield he
 
+            # 【讲解】步骤③：组装本轮要发给 LLM 的 system prompt（身份设定、
+            # 行为规范等，见 prompts.py）。每轮重新构建，因为 hooks 可能注入新内容。
             hook_prompts = (
                 self.hook_engine.get_prompt_messages() if self.hook_engine else None
             )
@@ -557,6 +599,9 @@ class Agent:
             if _new_records:
                 append_replacement_records(self.session_dir, _new_records)
 
+            # 【讲解】步骤④：真正调用 LLM。client.stream() 返回一个异步事件流，
+            # collector 一边把文本片段转发给 UI（yield event），一边在内部拼装
+            # 完整响应。这个 async for 跑完，模型这一轮就说完话了。
             collector = StreamCollector()
             llm_stream = self.client.stream(api_conv, system=system, tools=tools)
             async for event in collector.consume(llm_stream):
@@ -582,6 +627,9 @@ class Agent:
                 for tb in response.thinking_blocks
             ]
 
+            # 【讲解】处理"话没说完就被截断"（stop_reason == "max_tokens"）：
+            # 第一次遇到 → 把输出上限提到 64000，并让模型"从断的地方接着写"；
+            # 之后再遇到 → 最多再补救 3 次。continue 会跳回循环顶部重新请求。
             if response.stop_reason == "max_tokens":
                 if not max_tokens_escalated:
                     self.client.set_max_output_tokens(MAX_TOKENS_CEILING)
@@ -612,6 +660,10 @@ class Agent:
             else:
                 output_recoveries = 0
 
+            # 【讲解】步骤⑤-a：模型没有请求任何工具 —— 说明它认为任务完成了，
+            # 这是整个循环的正常出口。收尾工作：存最终回复、按间隔触发后台记忆
+            # 提取（ensure_future = "发射后不管"，不阻塞当前流程）、跑收尾 hooks、
+            # 给文件历史打快照（供 /rewind 回退用），最后 break 退出。
             if not response.tool_calls:
                 conversation.add_assistant_message(
                     response.text, thinking_blocks=conv_thinking
@@ -635,6 +687,9 @@ class Agent:
                 yield LoopComplete(total_turns=iteration)
                 break
 
+            # 【讲解】步骤⑤-b：模型请求了工具。先把"assistant 说了什么话、要用
+            # 哪些工具"原样记入对话历史——这是 LLM API 的硬性要求：下一轮请求里
+            # 每个 tool_use 都必须有对应的 tool_result，成对出现。
             tool_uses = [
                 ToolUseBlock(
                     tool_use_id=tc.tool_id,
@@ -656,6 +711,10 @@ class Agent:
                 response.cache_creation,
             )
 
+            # 【讲解】执行工具：先用 partition_tool_calls 把本轮工具调用切成
+            # "可并行批"和"必须串行批"。并行批走 _execute_batch_parallel
+            # （asyncio.gather 同时跑）；串行批逐个走 _execute_tool（含权限弹窗）。
+            # 每个结果既 yield 给 UI 显示，也存进 tool_results 准备回传给模型。
             tool_results: list[ToolResultBlock] = []
             batches = partition_tool_calls(response.tool_calls, self.registry)
 
@@ -775,6 +834,9 @@ class Agent:
                 )
                 break
 
+            # 【讲解】收尾：把所有工具结果作为一条 user 消息写回对话（模型下一轮
+            # 就能"看到"执行结果）。特例：如果模型调用了 ExitPlanMode（计划写完、
+            # 请求退出计划模式），本轮循环到此为止，把控制权交还给 UI 弹计划审批框。
             exit_plan_called = any(
                 tc.tool_name == "ExitPlanMode" for tc in response.tool_calls
             )
@@ -868,6 +930,12 @@ class Agent:
     async def _execute_tool(
         self, tc: ToolCallComplete
     ) -> AsyncIterator[tuple[ToolResult, float, bool]]:
+        # 【讲解】串行执行单个工具的完整流程，依次过四道关卡：
+        #   ① 工具存在吗？ ② 当前模式下启用了吗？ ③ 权限检查（可能弹窗问用户）
+        #   ④ 参数校验（pydantic）→ 真正执行 execute()
+        # 它也是异步生成器：正常情况只 yield 一次最终结果元组；但如果权限检查
+        # 结果是 "ask"，会先 yield 一个 PermissionRequest 事件（被 run() 转发给
+        # UI 弹窗），然后 await future 等用户作答——参见 PermissionRequest 的注释。
         tool = self.registry.get(tc.tool_name)
         start = time.monotonic()
         is_unknown = False
@@ -924,6 +992,9 @@ class Agent:
                     yield result, elapsed, is_unknown
                     return
 
+                # 【讲解】用户选了"总是允许"：把这次的操作内容变成一条持久化
+                # 允许规则写进 .zerocode/permissions.local.yaml，下次同类操作
+                # 就不再弹窗了。
                 if response == PermissionResponse.ALLOW_ALWAYS:
                     from zerocode.permissions.rules import Rule, extract_content
                     content = extract_content(tc.tool_name, tc.arguments)
@@ -931,6 +1002,10 @@ class Agent:
                     rule = Rule(tool_name=tc.tool_name, pattern=pattern, effect="allow")
                     self.permission_checker.rule_engine.append_local_rule(rule)
 
+        # 【讲解】真正执行工具。model_validate 用 pydantic 校验模型给的 JSON 参数
+        # （类型错、缺字段都会被拦下）。注意错误处理哲学：工具失败不抛异常、
+        # 不中断循环，而是包装成 is_error=True 的结果回传给模型——让模型自己
+        # 看到报错并调整策略，这正是 agent 能"自我纠错"的原因。
         try:
             params = tool.params_model.model_validate(tc.arguments)
             result = await tool.execute(params)
@@ -1021,13 +1096,25 @@ class Agent:
         self, task: str, conversation: ConversationManager | None = None,
         event_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> str:
-        """非交互模式主循环，阻塞运行到模型给出最终文本。"""
+        """非交互模式主循环，阻塞运行到模型给出最终文本。
+
+        【讲解】run() 的"简化双胞胎"，供命令行 -p 模式和子 agent/teammate 使用。
+        结构和 run() 完全一致（收消息→压缩→调 LLM→执行工具→循环），区别是：
+          - 不 yield 事件流，直接返回最终文本字符串；
+          - 没有权限弹窗——遇到需要确认的操作直接拒绝（见
+            _execute_tool_noninteractive），因为没有用户可问。
+        读懂 run() 之后这个函数可以快速略过。
+        """
+        # 【讲解】env_context 移到 if 外面无条件计算：它在下面压缩触发分支
+        # （line ~1199 的 conversation.inject_environment(env_context)）里
+        # 无论调用方是否自带 conversation 都会被引用。此前只在"自己新建
+        # conversation"分支里赋值，调用方自带 conversation 时一旦触发压缩
+        # 就会 UnboundLocalError（见 test_run_to_completion_external_conversation_survives_compact）。
+        env_context = build_environment_context(
+            self.work_dir, self.active_skills, self._skill_catalog, self._agent_catalog
+        )
         if conversation is None:
             conversation = ConversationManager()
-
-            env_context = build_environment_context(
-                self.work_dir, self.active_skills, self._skill_catalog, self._agent_catalog
-            )
             conversation.inject_environment(env_context)
 
             if self.instructions_content:
@@ -1253,6 +1340,9 @@ class Agent:
         return result
 
     def _maybe_persist_or_truncate(self, tool_use_id: str, text: str) -> str:
+        # 【讲解】工具输出的"瘦身"策略，防止一次超大输出（如 cat 大文件）撑爆
+        # 上下文：特别大 → 全文存到磁盘，对话里只留预览+文件路径（模型需要时
+        # 可以再去读）；比较大 → 直接截断加省略标记；正常大小 → 原样保留。
         from zerocode.context.manager import (
             SINGLE_RESULT_CHAR_LIMIT,
             make_persisted_preview,

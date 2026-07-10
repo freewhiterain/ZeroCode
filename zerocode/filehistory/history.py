@@ -37,7 +37,7 @@ class FileHistory:
 
     """按会话维护文件备份、快照列表和回退操作。"""
     def __init__(self, base_dir: str, session_id: str) -> None:
-        self._session_dir = Path(base_dir) / ".ZeroCode" / "file-history" / session_id
+        self._session_dir = Path(base_dir) / ".zerocode" / "file-history" / session_id
         self._session_dir.mkdir(parents=True, exist_ok=True)
         self._tracked: dict[str, int] = {}
         self._snapshots: list[Snapshot] = []
