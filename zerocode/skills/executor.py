@@ -49,6 +49,15 @@ def filter_tool_registry(
     return filtered
 
 
+# 【讲解】execute_inline 和 execute_fork 对应 SkillDef.mode 的两种执行方式：
+#   inline — 就是 tools/load_skill.py 里做的事：把 SOP 正文钉进当前 agent
+#     的 active_skills，不新建任何 agent，当前对话流程原地继续。
+#   fork — 真正创建一个全新的、隔离的子 Agent 实例（复用 agent.py 的
+#     Agent 类）来专门执行这个 skill，执行完把最终文本结果作为字符串返回，
+#     不会污染主对话的工具调用历史。_build_fork_context 决定这个子 agent
+#     能看到主对话的多少内容（对应 SkillDef.context 的 full/recent/none）。
+#     filter_tool_registry 则按 skill 声明的 allowedTools 白名单砍工具集
+#     （逻辑上和 agents/tool_filter.py 的 resolve_agent_tools 是近亲）。
 class SkillExecutor:
 
 

@@ -27,6 +27,10 @@ _OPTIONS = [
 ]
 
 
+# 【讲解】模型在计划模式下调用 ExitPlanMode 后弹出的三选一：YOLO（自动
+# 批准接下来所有操作，不再逐个问）、手动逐个批准、或者用文字告诉模型
+# "计划哪里需要改"（对应 PlanChoice.FEEDBACK，会带着 feedback 文本
+# 回传，模型据此修改计划重新走一轮）。
 class InlinePlanWidget(Vertical, can_focus=True):
     """内联的计划审批组件，格式与 Go 版 TUI 保持一致。"""
 

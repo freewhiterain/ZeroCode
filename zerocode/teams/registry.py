@@ -3,6 +3,12 @@ from __future__ import annotations
 import threading
 
 
+# 【讲解】"单例"（Singleton）模式：整个进程只有一份 AgentNameRegistry 实例，
+# 通过 instance() 拿到，而不是像别的类那样每次 new 一个。用途是给
+# SendMessage 这类工具一个全局的"名字 -> agent_id"查找表——队友互相发消息
+# 时用人类可读的名字（"reviewer"），底层要转换成内部的 agent_id。双重
+# check 锁（`if cls._instance is None` 判断两次）是并发安全创建单例的经典
+# 写法：避免多个协程同时看到 None 都去创建一次。
 class AgentNameRegistry:
     """线程安全初始化的单例名称注册表。"""
     _instance: AgentNameRegistry | None = None

@@ -35,6 +35,11 @@ _SAFE_COMMANDS = frozenset({
 })
 
 
+# 【讲解】"安全命令"判定：白名单里的命令（ls、pwd、git status 这类纯查询）
+# 可以自动放行不用弹窗。但光看命令名不够——`ls; rm -rf /` 这种用分号拼接
+# 出危险操作的写法也得挡住，所以先检查有没有管道符/分号/重定向/命令替换
+# 这些"能把简单命令变复杂"的 shell 特殊字符，一旦出现就不再算安全，
+# 老老实实走后面的危险模式检测和权限询问。
 def is_safe_command(command: str) -> bool:
     trimmed = command.strip()
     if not trimmed:
@@ -48,6 +53,10 @@ def is_safe_command(command: str) -> bool:
     return False
 
 
+# 【讲解】和上面的"白名单"相反，这是"黑名单"：一堆正则表达式匹配已知
+# 极度危险的命令模式（删根目录、格式化磁盘、fork bomb、管道执行远程脚本
+# 等），命中就直接拒绝，连"询问用户"的机会都不给——这类操作后果太严重，
+# 没有必要留给用户在弹窗里手滑点错。extra_patterns 允许项目自己追加规则。
 class DangerousCommandDetector:
 
 

@@ -10,6 +10,13 @@ import os
 from typing import Any
 
 
+# 【讲解】这个文件大部分篇幅是 get_coordinator_system_prompt() 里那一大段
+# system prompt 文本——协调模式下模型看到的完全是另一套"人设"：从"亲自
+# 动手改代码"变成"纯调度员，只管派活、看结果、跟用户汇报"（对应
+# team_create.py 里提到的"工具收窄"）。is_coordinator_mode 用一个环境变量
+# （ZeroCode_COORDINATOR_MODE）当全局开关，match_session_mode 负责在
+# resume 一个会话时，把环境变量状态和会话记录的模式对齐（避免恢复的会话
+# 一半是协调模式一半不是）。
 def is_coordinator_mode(enable_flag: bool = False) -> bool:
     if not enable_flag:
         return False

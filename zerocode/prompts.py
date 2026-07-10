@@ -12,6 +12,12 @@ from dataclasses import dataclass
 from datetime import datetime
 
 
+# 【讲解】system prompt（系统提示词）就是"喂给模型的说明书"，告诉它
+# 自己是谁、该怎么表现、有哪些规矩。本文件把说明书拆成一段段
+# PromptSection（每段有名字、优先级、正文），用 PromptBuilder 按优先级
+# 从小到大拼起来，最后 build_system_prompt() 组装出最终的一整段文本。
+# 拆成小段的好处：新增/调整某一部分规则时只改对应的 XXX_SECTION 常量，
+# 不用在一大坨字符串里找地方插入。
 @dataclass
 class PromptSection:
     name: str
@@ -210,6 +216,11 @@ _PLAN_MODE_SPARSE_REMINDER = (
 _REMINDER_INTERVAL = 5
 
 
+# 【讲解】计划模式的提醒文本为什么要分"完整版"和"精简版"？完整的计划
+# 模式规则很长（5 阶段工作流），每一轮都塞进对话会白白浪费大量 token——
+# 模型读过一次就记得了。所以只在第 1 轮和之后每隔 5 轮（_REMINDER_INTERVAL）
+# 发一次完整版"强化记忆"，中间几轮只发一句精简提醒，靠"够用又不啰嗦"
+# 的节奏保持模型不忘记自己在计划模式里。
 def build_plan_mode_reminder(
     plan_path: str, plan_exists: bool, iteration: int
 ) -> str:
@@ -249,6 +260,10 @@ def build_system_prompt(
     memory_section: str = "",
     work_dir: str = ".",
 ) -> str:
+    # 【讲解】协调模式（coordinator_mode）用的是完全不同的一套 system
+    # prompt（在 teams/coordinator.py 里单独定义），因为那时模型的角色从
+    # "亲自动手写代码"变成了"派发任务给团队成员"，行为规范也完全不同，
+    # 所以这里直接短路返回，不走下面拼接 IDENTITY/DoingTasks 等常规段落。
     if coordinator_mode:
         from zerocode.teams.coordinator import get_coordinator_system_prompt
         return get_coordinator_system_prompt(agent_catalog=agent_catalog)

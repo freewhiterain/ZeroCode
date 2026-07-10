@@ -79,6 +79,13 @@ def _load_rules_file(path: Path) -> list[Rule]:
     return rules
 
 
+# 【讲解】"规则引擎"实现的是你在 /permission 命令或权限弹窗里选"总是
+# 允许"之后发生的事：把这次操作变成一条持久化规则写进 yaml 文件（见
+# agent.py 里 ALLOW_ALWAYS 分支）。规则语法是 `Tool(通配符模式)`，比如
+# `Bash(npm test*)` 表示"以 npm test 开头的命令都放行"，用的是
+# fnmatch（shell 风格通配符，`*` `?` 这种，不是正则）。三层文件
+# （用户级/项目级/本地级）按顺序检查，同一层内越晚出现的规则优先级越高
+# （见 evaluate 里的 reversed）。
 class RuleEngine:
 
 

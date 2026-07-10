@@ -24,6 +24,15 @@ class HookNotification:
     success: bool
 
 
+# 【讲解】★ hooks 子系统的总调度器 ★，agent.py 持有一个实例。核心方法
+# run_hooks(event, ctx) 在生命周期的每个时间点被调用：先用
+# find_matching_hooks 筛出"事件名对上 + 条件满足 + 没被 once 用掉"的钩子，
+# 逐个执行。同步钩子会 await 等它跑完，异步钩子用
+# asyncio.ensure_future"发射后不管"（不阻塞主流程）。run_pre_tool_hooks
+# 是特化版本：专门给 pre_tool_use 用，因为它需要能真正"拒绝"工具调用
+# （返回 ToolRejectedError），这是唯一一种能改变 Agent 主循环行为的钩子，
+# 其余钩子的输出只是"记录下来"（prompt 类型会被塞进下一次的 system
+# prompt，其余的存进 _notifications 供 UI 展示或注入对话）。
 class HookEngine:
     def __init__(self, hooks: list[Hook] | None = None) -> None:
         self.hooks: list[Hook] = hooks or []

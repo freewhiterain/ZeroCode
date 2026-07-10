@@ -61,6 +61,9 @@ class EditFile(Tool):
         except Exception as e:
             return ToolResult(output=f"Error reading file: {e}", is_error=True)
 
+        # 【讲解】"必须唯一匹配"是这个工具的安全设计：如果 old_string 在文件里
+        # 出现了不止一次，程序没法确定模型想改的是哪一处，与其瞎猜改错，不如
+        # 直接报错让模型提供更多上下文重新定位（比如带上前后几行）。
         count = content.count(params.old_string)
         if count == 0:
             return ToolResult(output="Error: old_string not found in file", is_error=True)

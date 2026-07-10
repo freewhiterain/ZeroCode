@@ -9,6 +9,11 @@ from __future__ import annotations
 from enum import StrEnum
 
 
+# 【讲解】"hooks"（钩子）是给用户/项目自定义"在特定时刻自动执行某个动作"
+# 的机制——类似 git hooks，但挂在 Agent 生命周期上。这个枚举就是所有能挂
+# 钩子的时间点，agent.py 里到处能看到 `self.hook_engine.run_hooks("xxx", ctx)`
+# 调用，事件名对应这里的字符串值。比如 pre_tool_use 可以用来"在模型跑
+# Bash 前自动做一次安全审查甚至直接拒绝"（见 hooks/engine.py 的 reject）。
 class LifecycleEvent(StrEnum):
     # 会话（Session）级别
     SESSION_START = "session_start"

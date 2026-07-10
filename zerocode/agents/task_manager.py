@@ -40,6 +40,14 @@ class BackgroundTask:
     progress: ProgressInfo = field(default_factory=ProgressInfo)
 
 
+# 【讲解】"后台任务"就是不阻塞父 agent 当前回合、在独立 asyncio.Task 里
+# 跑的子 agent（对应 AgentTool 的 run_in_background=True 分支）。核心
+# 数据流：launch() 创建任务并 asyncio.create_task 扔进事件循环后台执行，
+# 立刻返回 task_id 给父 agent（父 agent 继续对话，不用等）；子任务跑完后
+# 把结果存进 BackgroundTask.result，并往 _notify_queue 里塞一条通知；父
+# agent 每轮循环开头调用 poll_completed() 把队列清空，取出完成的任务，
+# 格式化成通知消息注入自己的对话（见 agents/notification.py 和 agent.py
+# 的 notification_fn）。这就是"后台任务如何把结果送回主线"的完整链路。
 class TaskManager:
 
 

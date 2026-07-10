@@ -355,6 +355,14 @@ class SessionMeta:
 # ---------------------------------------------------------------------------
 
 
+# 【讲解】"会话持久化"：每条对话消息都被拆解成一个或多个 SessionRecord，
+# 逐行以 JSON 追加写入 .jsonl 文件（JSON Lines——每行一个独立 JSON 对象，
+# 天然支持流式追加，不用像普通 JSON 数组那样每次重写整个文件）。这就是
+# /session resume 能找回历史对话的原因：resume() 把 .jsonl 文件逐行读回、
+# 重放成 Message 列表。records_to_messages 是这个"回放"的核心，注意它对
+# COMPACT_BOUNDARY 记录的特殊处理——如果对话中间发生过压缩（见
+# context/manager.py），resume 只需要从最后一次压缩点开始重放，之前的
+# 原始记录留在磁盘上供审计但不需要真的重新加载进对话。
 class Session:
     def __init__(
         self,

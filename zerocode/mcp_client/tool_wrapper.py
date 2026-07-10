@@ -9,6 +9,13 @@ from zerocode.mcp_client.client import MCPClient
 from zerocode.tools.base import Tool, ToolResult
 
 
+# 【讲解】MCP 服务器返回的工具参数是纯 JSON Schema（字典），但 ZeroCode
+# 的 Tool.params_model 要求一个 pydantic 类。_build_params_model 用
+# pydantic 的 create_model()（运行时动态创建类，而不是写 `class Foo(BaseModel)`）
+# 把 JSON Schema 现场"翻译"成一个 pydantic 模型类——这是本文件最有意思
+# 的一处 Python 元编程技巧。MCPToolWrapper 则把 MCPClient 的调用包装成
+# 标准 Tool 接口，工具名加上 `mcp_<服务器名>_<原工具名>` 前缀防止不同
+# MCP 服务器之间的同名工具冲突。
 def _build_params_model(
     tool_name: str, input_schema: dict[str, Any]
 ) -> type[BaseModel]:

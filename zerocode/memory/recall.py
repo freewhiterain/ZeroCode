@@ -231,6 +231,13 @@ def format_memory_manifest(memories: list[MemoryHeader]) -> str:
 # Find relevant memories
 # ---------------------------------------------------------------------------
 
+# 【讲解】这是"结构化记忆"（就是你现在用的 memory/*.md + MEMORY.md 索引
+# 那一套）的检索逻辑，比 auto_memory.py 那种"全量塞进 prompt"更聪明：不是
+# 每次都把所有记忆文件内容都发给模型，而是先只发"文件名 + 一句话描述"
+# 的清单（format_memory_manifest），让 LLM（selector）从中挑出最多 5 个
+# 和当前问题相关的文件名，再去读取被选中文件的完整内容（render_reminder）。
+# 这是一种"两阶段检索"（先粗筛索引，再精读命中项），能在记忆库很大时
+# 依然控制住塞进 prompt 的 token 量。
 async def find_relevant_memories(
     query: str,
     user_mem_dir: Path | None,

@@ -53,6 +53,11 @@ class InProcessTeammateHandle:
             self.task.cancel()
 
 
+# 【讲解】进程内队友的启动函数：本质就是 asyncio.create_task 把
+# agent.run_to_completion() 扔进后台跑（和 task_manager.py 的后台任务是
+# 同一种手法），额外接了个 event_callback（_on_event）——每次队友有工具
+# 调用/token 用量/文字输出，都会实时更新 TeammateProgress，这样 TUI 的
+# 团队进度树才能"实时"显示队友在干什么，而不是等它跑完才知道结果。
 def spawn_inprocess_teammate(
     agent: Agent,
     prompt: str,

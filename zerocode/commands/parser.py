@@ -9,6 +9,10 @@ from __future__ import annotations
 from zerocode.commands.registry import CommandRegistry
 
 
+# 【讲解】parse_command 返回一个三元组 (命令名, 参数, 是不是命令)。
+# 第三个布尔值的存在是为了区分"这不是命令"（普通聊天消息，返回 False）
+# 和"是命令但名字为空"（用户就输入了一个孤零零的 `/`，返回 ("", "", True)）
+# 这两种情况——调用方靠它决定是走命令分发逻辑还是把文本当普通消息发给模型。
 def parse_command(text: str) -> tuple[str, str, bool]:
     text = text.strip()
     if not text.startswith("/"):

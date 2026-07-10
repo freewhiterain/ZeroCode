@@ -21,6 +21,14 @@ LOCAL_CONFIG_FILES = [
 ]
 
 
+# 【讲解】`git worktree add` 只会检出被 git 追踪的文件——像 node_modules、
+# .env、本地配置这些"存在于文件系统但不受版本控制"的东西，新 worktree 里
+# 是空的，直接跑代码会因为缺依赖/缺配置而失败。这个模块就是在造好 worktree
+# 后，手动把这些"游离在 git 之外"的必需品同步过去：复制本地配置文件、
+# 让 git hooks 复用主仓库的（core.hooksPath 指过去，不用每个 worktree 都装
+# 一遍）、给大型依赖目录（node_modules 等）建符号链接（不复制，省磁盘和
+# 时间）、按 `.worktreeinclude` 里写的通配符规则挑选性复制被 .gitignore
+# 排除的文件。
 def perform_post_creation_setup(
     repo_root: str,
     wt_path: str,

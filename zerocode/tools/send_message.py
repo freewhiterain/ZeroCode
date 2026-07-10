@@ -32,6 +32,14 @@ class SendMessageParams(BaseModel):
 VALID_MESSAGE_TYPES = {"text", "shutdown_request", "shutdown_response"}
 
 
+# 【讲解】团队协作的通信基础设施——"文件系统信箱"模式（实现见
+# teams/mailbox.py）：每个 agent 有自己的收件箱目录，SendMessage 把消息
+# 写进目标的信箱文件；对方在下一轮循环开头的 _consume_mailbox()
+# （见 agent.py）里读取并当作一条 user 消息注入对话。选用文件而非内存
+# 队列，是因为团队成员可能运行在完全独立的进程/tmux pane 里，文件是
+# 跨进程通信最简单可靠的方式。_wake_pane 是给"外部进程"后端用的补充
+# 手段：往对方的 tmux/iTerm2 面板发一个空按键，让它的终端从阻塞等待
+# 输入的状态醒过来去检查信箱。
 class SendMessageTool(Tool):
     name = "SendMessage"
     description = (

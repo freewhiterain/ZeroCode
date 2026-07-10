@@ -10,6 +10,12 @@ from zerocode.tools import ToolRegistry
 logger = logging.getLogger(__name__)
 
 
+# 【讲解】MCPManager 管理所有配置的 MCP 服务器连接。register_all_tools()
+# 在启动时对每个配置的服务器：连接 → 拉取它提供的工具列表 → 用
+# MCPToolWrapper（见 tool_wrapper.py）把每个 MCP 工具包成 ZeroCode 认识的
+# Tool 对象，注册进主工具表——这样模型调用一个 MCP 工具，和调用内置的
+# ReadFile 没有任何区别，上层完全无感知。单个服务器连接失败只记录错误、
+# 不影响其他服务器正常注册（errors 列表汇总返回，供 /mcp 命令展示）。
 class MCPManager:
 
 

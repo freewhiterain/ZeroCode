@@ -17,6 +17,24 @@ from zerocode.conversation import (
 )
 from zerocode.serialization import build_messages
 
+# 【讲解】★ 全项目算法最密集的文件 ★——"上下文管理"要解决的核心问题是：
+# LLM 一次能看的 token 数是有限的（context window），但对话可以无限进行
+# 下去，迟早会超。项目用两层防线应对：
+#
+#   Layer 1（apply_tool_result_budget）— "瘦身"，不改变对话的轮次结构。
+#     每轮发请求前，把过大的工具输出（比如 cat 一个大文件）换成"已存盘+
+#     预览"的占位符，或者把很旧的工具结果裁剪掉大半。原始 conversation
+#     不动，只在"发给 API 的副本"上做替换（这就是代码里反复出现的
+#     "Design B：不 mutate 原 conversation"）。
+#
+#   Layer 2（auto_compact）— "摘要压缩"，真正重写对话历史。当 Layer 1 瘦身
+#     后还是快要爆表，就把对话切成"旧的一大段前缀"+"近期一小段尾部"，
+#     调用 LLM 把前缀总结成一段摘要文字，重建出"摘要 + 保留的尾部原文"
+#     这样一段全新的、短得多的历史，取代原来的 conversation.history。
+#
+# 两层触发时机不同：Layer 1 每轮都跑（成本低），Layer 2 只在真的接近上限
+# 时才触发（成本高——要多打一次 LLM 请求）。读这个文件建议先跳到文末的
+# auto_compact() 看整体流程，再回头看细节函数。
 # ---------------------------------------------------------------------------
 # 常量
 # ---------------------------------------------------------------------------
@@ -290,6 +308,19 @@ def apply_tool_result_budget(
 
     state 会被 mutate：本轮新决定的 id 进入 seen_ids，新决定替换的 id 进入 replacements。
     """
+    # 【讲解】三道 Pass 依次处理同一批"新出现的"（fresh）工具结果：
+    #   Pass 1 单条超限 — 单个工具结果本身就超过 SINGLE_RESULT_CHAR_LIMIT
+    #     （5万字符），直接落盘、替换成预览。
+    #   Pass 2 聚合超限 — 单条都不算太大，但这一条消息里所有工具结果加起来
+    #     超过 AGGREGATE_CHAR_LIMIT（20万字符），从最大的开始逐个落盘替换，
+    #     直到总量降下来。
+    #   Pass 3（在函数最后调用 _snip_stale_messages）— 时间维度的裁剪：
+    #     超过 KEEP_RECENT_TURNS（10 轮）之前的旧工具结果，即使当初没触发
+    #     Pass1/2，也一律裁掉只留预览，因为模型已经很久没再需要它们了。
+    # 一旦某个 tool_use_id 做过替换决策，就记入 state.seen_ids/replacements
+    # 冻结下来（"决策冻结"），下一轮同一个 id 不会被重新判断，这样每个
+    # 工具结果的"命运"在对话生命周期里只确定一次，保证发给 API 的内容
+    # 前缀稳定（呼应 client.py 的 prompt cache 机制）。
     new_records: list[ContentReplacementRecord] = []
     new_history: list[Message] = []
 
@@ -703,6 +734,10 @@ def _prefix_too_small_to_compact(prefix: list[Message]) -> bool:
 # ---------------------------------------------------------------------------
 
 
+# 【讲解】"熔断器"（circuit breaker）是个常见的可靠性模式：如果摘要压缩
+# 连续失败 3 次（比如 LLM 一直报错），说明这条路多半走不通了，与其继续
+# 疯狂重试浪费 API 调用、拖慢体验，不如"跳闸"暂停自动压缩，提示用户手动
+# 用 /compact 处理。成功一次就把计数器清零（record_success），不是永久熔断。
 @dataclass
 class CompactCircuitBreaker:
     max_failures: int = 3
@@ -735,6 +770,14 @@ async def auto_compact(
     tool_schemas: list[Mapping[str, Any]] | None = None,
     transcript_path: str = "",
 ) -> CompactEvent | str | None:
+    # 【讲解】★ Layer 2 的总编排函数，agent.py 每轮循环开头都会调用它 ★
+    # 整体流程：① 算当前 token 用量离阈值还有多远，没到就直接返回 None
+    # （什么都不做）② 把历史切成"要摘要的前缀"+"原样保留的尾部"
+    # ③ 把前缀连同专门的摘要 prompt 发给 LLM，请它写一份结构化摘要
+    # （失败会重试，且重试时越缩越短，见下面 except 分支）④ 用摘要 +
+    # 尾部原文 + "最近读过的文件/技能"恢复快照重建出一份新的、短得多的
+    # conversation.history，替换掉旧的。返回值三态：CompactEvent（压缩
+    # 成功）/ str（失败原因文本）/ None（还不需要压缩）。
     threshold = compute_compact_threshold(context_window, manual=manual)
 
     # 以真实 API 用量为锚点做阈值判断：current_tokens() 返回上次计费基准

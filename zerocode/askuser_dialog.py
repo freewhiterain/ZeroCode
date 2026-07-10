@@ -13,6 +13,19 @@ from textual.message import Message
 from textual.widgets import Static
 
 
+# 【讲解】UI 层这几个 InlineXxxWidget（本文件 + permission_dialog.py +
+# plan_dialog.py + session_dialog.py）都是同一套 Textual 组件模式：
+#   - 继承 Vertical（垂直布局容器）、can_focus=True 让它能接收键盘事件
+#   - compose() 返回要渲染的子组件（这里只有一个 Static 文本块）
+#   - 状态（光标位置、已选项等）存成普通实例属性，任何变化后手动调用
+#     _refresh() 重新生成文本并塞回 Static——不是 Textual 的响应式属性
+#     （reactive），而是"手动重渲染"，更简单直接
+#   - BINDINGS 声明键位 → action_xxx 方法，Textual 自动把按键路由过去
+#   - 交互结束时 post_message(self.Responded(...)) 把结果往上抛给父组件
+#     （app.py 监听这个消息，再把答案喂回 asyncio.Future——呼应
+#     tools/ask_user.py 里 execute() 的 await future）
+# 这个文件是最复杂的一个：要支持多问题之间 Tab 切换、单选/多选、外加一个
+# "Other" 自定义输入项，本质是纯文本手动排版 + 键盘状态机。
 class InlineAskUserWidget(Vertical, can_focus=True):
     """内联的 AskUser 组件，支持多问题之间的 Tab 切换导航。
 

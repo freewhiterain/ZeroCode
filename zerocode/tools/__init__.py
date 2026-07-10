@@ -16,6 +16,15 @@ if TYPE_CHECKING:
 
 
 # 工具注册表：集中管理工具实例、禁用状态和延迟工具的发现状态。
+# 【讲解】ToolRegistry 是"所有工具的花名册"——Agent 不直接持有工具对象，
+# 而是通过它按名字查工具、判断是否启用、生成要发给模型的 schema 列表。
+# 内部只是三个简单的字典/集合，没有什么魔法：
+#   _tools      — name -> Tool 实例
+#   _disabled   — 被临时禁用的工具名（比如某些模式下砍掉写权限工具）
+#   _discovered — "延迟工具"里，模型已经通过 ToolSearch 主动加载过 schema 的
+# 延迟工具（should_defer=True）机制：启动时只把工具名字告诉模型（省 token），
+# 模型需要时调用 ToolSearch 按需加载完整 schema，加载后记入 _discovered，
+# 之后 get_all_schemas() 才会把它塞进正式的工具列表里。
 class ToolRegistry:
     def __init__(self) -> None:
         self._tools: dict[str, Tool] = {}
@@ -145,6 +154,11 @@ class ToolRegistry:
         return schemas
 
 
+# 【讲解】组装函数：把几个最基础的文件/命令工具实例化并注册成一个默认
+# 注册表——注意这里只注册了 6 个"核心"工具，AgentTool、TeamCreate 等更
+# "重"的工具是在 __main__.py / app.py 里按需追加注册的（因为它们需要
+# 更多上下文，比如 parent_agent、team_manager）。三个文件类工具共享同一个
+# FileStateCache 实例，这样"先读后写"的保护才能在读写工具之间生效。
 def create_default_registry(file_cache: FileCache | None = None, file_history: Any = None) -> ToolRegistry:
     from zerocode.tools.bash import Bash
     from zerocode.tools.edit_file import EditFile

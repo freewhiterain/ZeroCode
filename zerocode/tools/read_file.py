@@ -26,6 +26,12 @@ class Params(BaseModel):
     limit: int = Field(default=2000, description="Maximum number of lines to read")
 
 
+# 【讲解】这是最简单的一个完整工具实现，适合当作"如何写一个工具"的范例：
+#   1. 定义 Params（pydantic 模型）描述参数；
+#   2. 继承 Tool，填 name/description/category 等类属性；
+#   3. 实现 async def execute()，返回 ToolResult。
+# is_concurrency_safe = True 说明这是只读操作，可以和其他安全工具并行跑
+# （见 agent.py 的 partition_tool_calls）。
 class ReadFile(Tool):
     name = "ReadFile"
     description = "Read a file and return its contents with line numbers."
@@ -64,6 +70,9 @@ class ReadFile(Tool):
             except OSError:
                 pass
 
+        # 【讲解】每行前面拼上"行号\t"再返回给模型——这样模型引用代码位置时
+        # 能报出准确行号（比如 EditFile 报错、或者你在对话里看到 file.py:42
+        # 这种格式），也方便后续 EditFile 精确定位要改的文本。
         lines = text.splitlines()
         selected = lines[params.offset : params.offset + params.limit]
         numbered = [f"{i + params.offset + 1}\t{line}" for i, line in enumerate(selected)]

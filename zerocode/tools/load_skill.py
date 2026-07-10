@@ -65,6 +65,11 @@ class LoadSkill(Tool):
                 is_error=True,
             )
 
+        # 【讲解】"激活技能"分两步：① 把技能的提示词正文（SOP）钉进环境上下文
+        # （activate_skill，之后每轮都会带上，见 prompts.py build_environment_context）；
+        # ② 如果是"目录型技能"（自带 tool.json 描述的专用工具），动态把那些
+        # 工具注册进当前 agent 的工具表——这就是为什么有的技能激活后模型会
+        # 突然"多出"几个新工具可用。
         self._agent.activate_skill(skill.name, skill.prompt_body)
 
         tool_count = 0

@@ -32,6 +32,14 @@ class ForkError(Exception):
     pass
 
 
+# 【讲解】fork 出的子 agent 会拿到父 agent 当前对话历史的一份"深拷贝"
+# （copy.deepcopy——连嵌套的列表/dataclass 都整体复制，不共享引用，子 agent
+# 怎么改都不会影响父 agent 的历史）。有个边界情况需要处理：如果父 agent
+# 正好在"刚发起了工具调用、还没拿到结果"的时刻被 fork（比如 Agent 工具
+# 本身就是父 agent 发起的一次工具调用），那父对话历史末尾会有"悬空"的
+# tool_use（没有配对的 tool_result）——这在 LLM API 里是不合法的。下面这段
+# 就是给这些悬空调用补一个占位结果（content="interrupted"），让复制出来
+# 的对话历史保持 API 要求的"工具调用必须成对"的完整性。
 def build_forked_messages(
     conversation: ConversationManager,
     task: str,

@@ -74,6 +74,12 @@ def _describe(tool_name: str, args: dict) -> str:
             return tool_name
 
 
+# 【讲解】这个类专门喂给 TUI 的"团队进度树"展示（teammate_tree.py）。
+# 为什么要加 threading.Lock？因为进程内队友是在 asyncio 事件循环里跑的，
+# 理论上单线程 asyncio 不需要锁，但 TeammateProgress 可能被 UI 渲染线程
+# 和 agent 执行协程同时读写（Textual 某些渲染路径可能跑在不同线程），
+# 加锁是防御性的数据竞争保护。SPINNER_VERBS 那一长串搞怪动词纯粹是
+# UI 彩蛋——队友"思考中"时随机挑一个词当作加载提示（"Kneading..."之类）。
 @dataclass
 class TeammateProgress:
     """线程安全地累计单个 teammate 的运行状态和展示信息。"""

@@ -40,6 +40,11 @@ class AgentDef:
     source: str = "builtin"
 
 
+# 【讲解】"agent 定义文件"就是 zerocode/agents/builtins/*.md 里那些
+# Explore.md、Plan.md 这类文件——本质是一份 Markdown，头部用 `---` 包裹一段
+# YAML（叫 frontmatter，博客系统常用这个格式写文章元数据），YAML 里配
+# 名字/权限/工具白名单等，YAML 下面的正文就是这个子 agent 专属的 system
+# prompt。这个函数负责把 YAML 头和正文切开、解析成 Python 字典。
 def parse_frontmatter(raw: str) -> tuple[dict, str]:
     stripped = raw.lstrip()
     if not stripped.startswith("---"):

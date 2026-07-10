@@ -36,6 +36,10 @@ class ExitPlanModeTool(Tool):
         self._is_plan_mode = is_plan_mode
         self._plan_exists = plan_exists
 
+    # 【讲解】这个工具很特别：它自己不做任何实质操作，只做状态校验，返回值
+    # 其实是"说给模型听的指令"（"不要再调用工具了，结束这一轮"）。真正的
+    # "结束计划模式、弹审批框"逻辑在 agent.py 的 run() 里通过检测
+    # `tc.tool_name == "ExitPlanMode"` 来触发（搜索 exit_plan_called）。
     async def execute(self, params: ExitPlanModeParams) -> ToolResult:
         if self._is_plan_mode is not None and not self._is_plan_mode():
             return ToolResult(

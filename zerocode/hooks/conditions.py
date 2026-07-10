@@ -15,6 +15,12 @@ if TYPE_CHECKING:
     from zerocode.hooks.models import HookContext
 
 
+# 【讲解】条件表达式的迷你解析器，语法类似 `tool == "Bash"` 或
+# `args.file_path =~ /\.py$/`。四种操作符：`==`/`!=` 精确匹配，`=~` 正则，
+# `~=` shell 通配符。ConditionGroup 支持用 `&&`/`||` 组合多个条件，但故意
+# 禁止在同一个表达式里混用两者（parse_condition 里会直接报错）——因为
+# `A && B || C` 到底是 `(A&&B)||C` 还是 `A&&(B||C)` 容易产生歧义，与其
+# 猜测用户意图不如强制拆成两条独立的钩子。
 @dataclass
 class Condition:
     field: str

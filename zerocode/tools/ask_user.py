@@ -44,6 +44,11 @@ class AskUserEvent:
         self.future = future
 
 
+# 【讲解】和 agent.py 里 PermissionRequest 用的是同一套"Future 暂停/唤醒"手法：
+# execute() 创建一个 asyncio.Future 存进 self._pending_event，然后 await 它。
+# UI 层拿到 _pending_event 后渲染问题界面，用户作答后调用
+# future.set_result(答案)，这里的 await 就返回了。300 秒没人回答就超时退出，
+# 避免 Agent 无限期挂起。should_defer = True 让它作为"延迟工具"按需加载。
 class AskUserTool(Tool):
     name = "AskUserQuestion"
     description = (

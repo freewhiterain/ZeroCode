@@ -21,6 +21,14 @@ log = logging.getLogger(__name__)
 _REGISTERED_SKILL_NAMES: set[str] = set()
 
 
+# 【讲解】这是"斜杠命令是怎么变出来的"的关键一环：Skill 不是提前写死在
+# ALL_COMMANDS 列表里的，而是根据当前加载到的 skill 目录/文件，运行期
+# 动态地为每一个 skill 生成一个同名命令（比如 commit skill 就变成了
+# /commit）。make_handler(name) 用了个经典的闭包技巧：如果直接在 for 循环
+# 里定义 async def handler 并引用循环变量 skill_name，所有生成的 handler
+# 最后会共享同一个循环结束时的 skill_name 值（Python 闭包捕获变量而非
+# 值的经典坑）；用一个额外的工厂函数把 name 当参数传进去、在函数体内部
+# 生成新的 handler，才能让每个命令绑定到正确的 skill 名字。
 # 重新加载 Skill 后会调用该函数刷新动态命令，避免旧命令残留或与内置命令冲突。
 def register_skill_commands(
     registry: CommandRegistry,

@@ -45,6 +45,11 @@ class EnterWorktreeTool(Tool):
         self._manager = worktree_manager
 
 
+    # 【讲解】"worktree"是 git 的一个功能：可以从同一仓库检出多个独立的
+    # 工作目录（各自可以在不同分支上），不用来回 checkout 主目录、不怕
+    # 冲突或者互相污染。这个工具让 agent 能"钻进"一个隔离的临时目录里
+    # 干活（比如尝试一个有风险的重构），完事后用 ExitWorktree 决定保留
+    # 还是丢弃，主项目目录全程不受影响。
     async def execute(self, params: EnterWorktreeParams) -> ToolResult:
         if self._manager.get_current_session() is not None:
             return ToolResult(

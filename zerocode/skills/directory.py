@@ -35,6 +35,13 @@ def parse_tool_json(path: Path) -> list[dict[str, Any]]:
     return raw
 
 
+# 【讲解】这是全项目最"动态"的一段代码：目录型 skill 的 tool.json 声明了
+# 工具名和参数 schema，真正的执行逻辑是 references/<工具名>.py 文件里的
+# 一个 `execute` 函数——但这个文件在启动时并不存在于任何 import 语句里，
+# 而是运行期用 importlib.util 动态把它当模块加载进来（Python 的"运行时
+# 反射式导入"，类似 JS 的 `import()`）。这样每个 skill 就能带上自己专属
+# 的、内置代码库里压根不知道的自定义工具。加载失败（脚本缺失、
+# 没有 execute 函数）都只记警告不崩溃，保证一个坏 skill 不会拖垮整个启动。
 def load_tool_implementation(
     references_dir: Path, tool_name: str
 ) -> Callable[..., Any] | None:
@@ -67,6 +74,12 @@ class _DynamicParams(BaseModel):
     model_config = {"extra": "allow"}
 
 
+# 【讲解】SkillCustomTool 是给"动态加载的 Python 函数"套上标准 Tool 外壳的
+# 适配器——因为 Agent 主循环只认识 Tool 接口（execute(params) -> ToolResult），
+# 不管这个工具背后是内置类还是 skill 目录里临时加载出来的函数。
+# _DynamicParams 用 `model_config = {"extra": "allow"}` 关掉了 pydantic 的
+# 严格字段校验，因为参数结构由 tool.json 里的 schema 动态决定，Python 端
+# 没法提前定义固定字段。
 class SkillCustomTool(Tool):
 
 

@@ -12,6 +12,13 @@ from enum import Enum
 from typing import Any, Awaitable, Callable, Protocol
 
 
+# 【讲解】斜杠命令（/clear、/session 等）分三种执行方式：
+#   LOCAL    — 纯本地逻辑，不碰 UI，也不用发消息给模型（比如清空某个状态）
+#   LOCAL_UI — 本地逻辑但需要操作界面（弹窗、刷新显示，通过 UIController）
+#   PROMPT   — 命令本身就是拼一段提示词，直接当作一条消息发给模型
+# CommandContext 是每个命令处理函数（CommandHandler）执行时能拿到的"全部
+# 家当"——agent、对话、session、UI 控制器等等，处理函数只需要从这一个
+# 参数里取所需的东西，不用命令注册时逐个声明依赖。
 class CommandType(str, Enum):
     LOCAL = "local"
     LOCAL_UI = "local_ui"
@@ -55,6 +62,11 @@ class Command:
     hidden: bool = False
 
 
+# 【讲解】命令注册表，和 tools/__init__.py 的 ToolRegistry 是同一种设计：
+# 一个"名字 -> 对象"的字典，外加别名映射表（比如 /q 是 /quit 的别名）。
+# register()（异步、带锁）用于运行期动态注册（比如 skill_register.py 把
+# 加载到的 Skill 现场注册成命令，多个协程可能同时触发，需要锁防止竞态）；
+# register_sync() 是启动阶段的同步版本，那时还没有并发问题，不需要锁。
 class CommandRegistry:
 
 

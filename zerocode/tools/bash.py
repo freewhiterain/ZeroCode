@@ -29,6 +29,11 @@ class Bash(Tool):
 
 
     async def execute(self, params: Params) -> ToolResult:
+        # 【讲解】asyncio.create_subprocess_shell 异步启动一个子进程（不会
+        # 阻塞事件循环，其他工具/UI 仍能响应）；asyncio.wait_for 给它套一层
+        # 超时保护——命令跑太久就 kill 掉子进程并报错，避免一个卡死的命令
+        # 拖死整个 Agent。category = "command" 意味着默认权限模式下会弹窗
+        # 询问用户（见 permissions/modes.py）。
         timeout = min(params.timeout, MAX_TIMEOUT)
 
         try:

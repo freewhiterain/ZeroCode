@@ -19,6 +19,12 @@ from zerocode.worktree.manager import WorktreeManager
 
 log = logging.getLogger(__name__)
 
+# 【讲解】"临时 worktree"是那些由 agent/团队/后台任务自动创建、命名带
+# 特定前缀（agent-xxx、wf-xxx、bridge-xxx 等）的工作区。这个清理器只处理
+# 匹配这些命名模式的目录——用户自己手动创建的 worktree（名字不匹配任何
+# 正则）永远不会被自动删除，这是刻意的安全边界。真正删除前还要过四道
+# 关卡：不是当前正在用的 session、超过时间阈值、没有未提交的改动、没有
+# 未推送的提交——任何一条不满足就跳过，宁可漏清理也不能误删用户的工作。
 EPHEMERAL_PATTERNS = [
     re.compile(r"^agent-a[0-9a-f]{7}$"),
     re.compile(r"^wf_[0-9a-f]{8}-[0-9a-f]{3}-\d+$"),

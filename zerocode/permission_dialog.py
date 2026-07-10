@@ -22,6 +22,11 @@ _PERM_OPTIONS = [
 ]
 
 
+# 【讲解】三选一权限弹窗，是 agent.py 里 PermissionRequest 事件在界面上的
+# 落地：用户按上下键选、回车确认后 post_message 一个 Responded(response)，
+# app.py 收到后调用 future.set_result(response) 唤醒卡在
+# `await future` 的 Agent._execute_tool（见 agent.py 顶部关于
+# PermissionRequest 的讲解注释）。
 class InlinePermissionWidget(Vertical, can_focus=True):
     """渲染在聊天区域内部的内联权限确认提示。
 

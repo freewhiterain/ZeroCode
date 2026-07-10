@@ -17,6 +17,12 @@ PROJECT_SKILLS_DIR = ".zerocode/skills"
 USER_SKILLS_DIR = "~/.zerocode/skills"
 
 
+# 【讲解】和 agents/loader.py 是同一套设计模式（项目级 > 用户级 > 内置级
+# 的优先级扫描 + get() 时热重载），这里多了一种"目录型 skill"：不是单个
+# .md 文件，而是一个文件夹，里面有 SKILL.md 作为主定义、外加 tool.json
+# 声明专属工具、references/ 存放这些工具的 Python 实现（见
+# skills/directory.py 的 register_skill_tools）。commit/review/test 这几个
+# 内置 skill 都是这种目录型。
 class SkillLoader:
     def __init__(self, work_dir: str) -> None:
         self._work_dir = work_dir

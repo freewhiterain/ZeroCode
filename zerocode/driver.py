@@ -15,6 +15,13 @@ else:
     from textual.drivers.linux_driver import LinuxDriver as _BaseDriver
 
 
+# 【讲解】背景知识：终端程序（vim、htop 这类）通常会切换到"备用屏"
+# （alternate screen buffer）——退出后终端画面恢复原样，仿佛程序从没运行
+# 过。Textual 默认也这么干。但 ZeroCode 想要的效果和 Claude Code 一样：
+# 退出后聊天记录还留在终端里能往上翻。这个类通过拦截并删除控制转义序列
+# `\x1b[?1049h`（进入备用屏）和 `\x1b[?1049l`（退出备用屏），骗过终端
+# "一直待在主屏幕"，配合 start_application_mode 里先打印一堆换行把旧内容
+# 推进 scrollback，实现"TUI 内容仍会被保留在终端历史里"的效果。
 class NoAltScreenDriver(_BaseDriver):
     """跳过备用屏（alternate screen）的 driver，让输出保留在主终端的
     滚动回看（scrollback）区域中——与 Claude Code 的渲染行为保持一致。

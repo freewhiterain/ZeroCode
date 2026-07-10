@@ -6,6 +6,11 @@ MAX_INCLUDE_DEPTH = 5
 INCLUDE_PREFIX = "@include "
 
 
+# 【讲解】"instructions" 就是 ZeroCode.md（你在这个项目里看到的 ZEROCODE.md）
+# 这类项目指令文件的加载器。process_includes 支持一个简单的 `@include 路径`
+# 语法：递归展开被包含的文件内容（有深度上限防止 include 死循环，也会
+# 拒绝越出项目根目录的路径，防止读到不该读的文件）。load_instructions 按
+# 项目根、项目 .zerocode 目录、用户主目录三处依次查找 ZeroCode.md 并拼接。
 def process_includes(
     content: str,
     base_dir: Path,

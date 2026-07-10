@@ -140,6 +140,15 @@ def expand_at_refs(text: str, work_dir: str) -> str:
     return _AT_REF_RE.sub(_replace, text)
 
 
+# 【讲解】app.py 是整个项目最大的文件（77KB），是 Textual TUI 的"大总管"，
+# 但读它之前你已经理解了 agent.py 的事件流设计，这个文件做的事情主要就是
+# "把 AgentEvent 一个个翻译成界面上的组件更新"——本身不包含任何推理逻辑。
+# 建议阅读顺序：① ChatInput（输入框）② ToolCallBlock 等展示组件
+# ③ ZeroCodeApp.__init__（整个应用怎么组装起来）④ ★ _send_message ★
+# （全文件最核心的方法：`async for event in self.agent.run(...)` 消费
+# 事件流，这行代码就是 UI 和 Agent 之间唯一的桥梁）。
+#
+# ChatInput 是聊天输入框，继承 Textual 的 TextArea（多行文本编辑组件）。
 class ChatInput(TextArea):
     BINDINGS = [
         Binding("enter", "submit", "Submit", priority=True),
@@ -359,6 +368,12 @@ def _format_detail(tool_name: str, arguments: dict[str, Any], output: str) -> st
     return "\n".join(parts)
 
 
+# 【讲解】三个展示组件对应 ToolUseEvent 的三种渲染方式：ToolCallBlock 是
+# 普通工具调用的折叠/展开卡片（点击 on_click 切换 _render_collapsed /
+# _render_expanded）；SubAgentBlock 专门渲染 Agent 工具调用（子
+# agent/团队/后台任务，用 _is_subagent_tool 判断）；ToolGroupSummary 把连续
+# 的并行工具调用（见 agent.py 的 partition_tool_calls 并行批次）合并显示成
+# 一行"×N 个工具"的摘要，避免屏幕被一堆同类调用刷满。
 class ToolCallBlock(Static, can_focus=True):
 
     def __init__(self, tool_name: str, arguments: dict[str, Any], **kwargs: Any) -> None:
@@ -578,6 +593,13 @@ class ZeroCodeApp(App):
     ]
 
 
+    # 【讲解】__init__ 又长又平铺直叙，但它其实就是把你在 __main__.py（-p
+    # 非交互模式）里见过的那一整套组件（client、registry、权限检查器、
+    # session/memory/skill/agent 各种 manager）在交互模式下也重新组装一遍，
+    # 只是这里先存空壳/占位（大量 None），真正实例化推迟到 on_mount() →
+    # _select_provider()（选定 provider 后才知道用哪个 client）。这是
+    # Textual 应用的常见写法：__init__ 阶段界面还没挂载，很多东西没法真正
+    # 初始化，先声明字段占位，compose()/on_mount() 阶段再补齐。
     def __init__(
         self,
         providers: list[ProviderConfig],
@@ -1217,6 +1239,16 @@ class ZeroCodeApp(App):
         except (asyncio.TimeoutError, Exception):
             return ""
 
+    # 【讲解】★★★ 全文件最核心的方法 ★★★——用户发一条消息，或者后台通知
+    # 唤醒对话，最终都会调这个方法。前半段是"发消息前的准备工作"（展开
+    # @文件引用、把用户消息渲染成聊天气泡、预取相关记忆、准备好 AI 回复的
+    # 占位组件、启动加载动画）。真正的核心是下面的
+    # `async for event in self.agent.run(self.conversation)`：
+    # 这一行就是 UI 层"消费" agent.py 事件流的地方，长长的 if/elif isinstance
+    # 链对应 agent.py 里定义的每一种 AgentEvent（StreamText → 追加文字到
+    # 气泡，ToolUseEvent → 新建一个工具调用卡片，ToolResultEvent → 回填卡片
+    # 结果，PermissionRequest → 弹出权限对话框等用户选……）。读完这个方法，
+    # 你就把"事件驱动"这套设计从生产端（Agent）到消费端（UI）完整看了一遍。
     async def _send_message(self, text: str, is_notification: bool = False) -> None:
         assert self.agent is not None
 
@@ -1684,6 +1716,15 @@ class ZeroCodeApp(App):
         except Exception:
             pass
 
+    # 【讲解】这里是 agent.py 里"PermissionRequest → await future 睡眠"故事
+    # 的下半段：弹出权限对话框后并不 await 任何东西，方法就直接返回了——
+    # 因为 _send_message 里的 `async for event in self.agent.run(...)`
+    # 本身就在等 Agent 那边的 await future，只要这个协程不给 future 设置
+    # 结果，事件流就不会往下走。真正"回答"这个问题的是下面
+    # on_inline_permission_widget_responded：用户在弹窗里选择后，Textual
+    # 把 InlinePermissionWidget.Responded 消息路由到这个方法，
+    # `req.future.set_result(event.response)` 一调用，Agent 那边挂起的
+    # await 立刻返回，事件流继续往下跑。
     async def _handle_permission_request(self, request: PermissionRequest) -> None:
         from zerocode.permission_dialog import InlinePermissionWidget
 
@@ -1770,6 +1811,12 @@ class ZeroCodeApp(App):
     # MCP
     # -----------------------------------------------------------------
 
+    # 【讲解】MCP 服务器连接是在后台异步跑的（调用方用 asyncio.create_task
+    # 把它扔进 self._mcp_init_task，不阻塞界面启动），这样即使某个 MCP
+    # 服务器响应慢，用户也能立刻开始打字，不用干等连接完成。_send_message
+    # 里那句 "if self._mcp_init_task and not done(): await it" 就是"真要
+    # 发消息时才补上等待"——很像 client.py 里 context window 拉取的"尽力
+    # 而为、不阻塞启动"哲学。
     async def _init_mcp(self) -> None:
         self._mcp_connecting = True
         self._update_mode_label()

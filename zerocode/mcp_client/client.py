@@ -15,6 +15,13 @@ from zerocode.config import MCPServerConfig, build_child_env, resolve_env_vars
 logger = logging.getLogger(__name__)
 
 
+# 【讲解】"MCP"（Model Context Protocol）是一套开放标准，让外部程序可以
+# 用统一协议给 LLM 应用提供工具/数据（你现在用的 Claude Code 也支持它，
+# 系统提示里那些 mcp__xxx 开头的工具就是这么接入的）。这个类是 MCP 服务器
+# 的连接句柄，支持两种传输方式：stdio（本地启动一个子进程，通过标准输入
+# 输出通信）和 HTTP（连接远程 MCP 服务）。AsyncExitStack 是标准库的一个
+# 工具，用来管理"一串需要按相反顺序清理的异步资源"（连接、进程、HTTP
+# client），close() 时一次性全部妥善关闭，不用手写一堆 try/finally 嵌套。
 class MCPClient:
     def __init__(self, config: MCPServerConfig) -> None:
         self.config = config

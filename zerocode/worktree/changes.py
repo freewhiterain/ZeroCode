@@ -29,6 +29,13 @@ class Changes:
     new_commits: int = 0
 
 
+# 【讲解】"这个 worktree 里有没有值得保留的工作"，用两个 git 命令合起来
+# 判断：`git status --porcelain`（每行一个改动文件，数行数就知道有多少
+# 未提交改动）+ `git rev-list <创建时的commit>..HEAD --count`（数创建
+# 之后新增了多少个提交）。任何一个大于 0 都算"有变更"，触发 exit_worktree.py
+# / auto_cleanup 里的保护逻辑。异常情况下（git 命令本身失败）保守地当作
+# "有变更"处理（uncommitted/new_commits 设为 1），宁可误判为"有改动"多问
+# 一句，也不要真把用户的工作误删。
 def count_worktree_changes(wt_path: str, head_commit: str) -> Changes:
     changes = Changes()
     try:

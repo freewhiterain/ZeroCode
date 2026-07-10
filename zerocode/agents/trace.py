@@ -24,6 +24,12 @@ class TraceNode:
     status: str = "running"
 
 
+# 【讲解】"trace"（调用链追踪）解决的问题：主 agent 派生了好几个子
+# agent，子 agent 又可能再派生孙 agent，这棵树的执行情况（谁在跑、跑了多
+# 久、花了多少 token）需要能汇总展示出来（就是 /trace 命令看到的树状图）。
+# 每个 agent 实例对应一个 TraceNode，靠 parent_id 串成树，trace_id 是"整
+# 棵树"共享的同一个标识（根节点的 agent_id）。get_tree() 按 trace_id 一次
+# 拉出整棵树的所有节点，get_total_tokens() 汇总整棵树的用量。
 class TraceManager:
     def __init__(self) -> None:
         self._nodes: dict[str, TraceNode] = {}

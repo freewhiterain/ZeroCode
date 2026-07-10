@@ -34,6 +34,13 @@ def _run_tmux(*args: str) -> str:
     return result.stdout.strip()
 
 
+# 【讲解】这里"启动一个队友"的本质，是拼出一条完整的 shell 命令行
+# （`ZeroCode -p '任务内容'`，带上环境变量声明团队名/队友名），再用
+# tmux send-keys 把这条命令"打字"进新开的 pane 里、模拟按下回车执行——
+# 相当于你自己在终端里手动开一个新窗口敲命令，只是全自动完成。
+# spawn_tmux_teammate 里那串 try/except 嵌套是"三级降级"：优先在已有的
+# tmux 窗口里拆分 pane，失败就新开一个窗口，再失败就干脆新建一整个
+# tmux session——保证不管当前 tmux 状态如何都尽量把队友开起来。
 def build_cli_command(
     team_name: str,
     teammate_name: str,

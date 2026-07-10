@@ -31,6 +31,13 @@ class ActionResult:
     success: bool = True
 
 
+# 【讲解】Action 描述"钩子触发时具体干什么"（四选一：跑 shell 命令 /
+# 注入一段提示文字 / 发 HTTP 请求 / 交给 agent 处理，见 executors.py）。
+# Hook 则是"什么时候、在什么条件下触发这个 Action"的完整配置：event 对应
+# LifecycleEvent、condition 是可选的过滤条件（见 conditions.py）、reject
+# 表示这个钩子能直接否决工具调用（只用于 pre_tool_use）、once 表示只触发
+# 一次。HookContext.expand() 是个简易模板引擎：把钩子命令/消息里的
+# `$TOOL_NAME`、`$FILE_PATH` 这类占位符替换成本次调用的实际值。
 @dataclass
 class Hook:
     id: str

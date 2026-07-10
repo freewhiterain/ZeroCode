@@ -26,6 +26,12 @@ def _format_status(status: str) -> str:
     return f"{icons.get(status, '?')} {status}"
 
 
+# 【讲解】tasks.py / trace.py / worktree.py 是"工厂函数"风格的命令：因为
+# 它们的处理逻辑需要用到 TaskManager/TraceManager/WorktreeManager 这些在
+# 应用启动阶段才创建好的对象，不能像 clear.py 那样在模块顶层直接
+# `CLEAR_COMMAND = Command(...)`。所以改成 create_xxx_command(dependency)
+# 返回一个 Command，调用方（app.py）在拿到具体的 manager 实例后再调用
+# 这个工厂函数完成注册。
 def create_tasks_handler(task_manager: TaskManager):
 
 

@@ -1,4 +1,8 @@
 """后台任务完成通知的格式化与注入。"""
+# 【讲解】小工具模块：把 task_manager.py 里的 BackgroundTask 对象翻译成一段
+# 人类/模型都能读的文本块（<task-notification>...），再用
+# conversation.add_user_message 塞进对话——这样父 agent 下一轮请求就能
+# "看到"后台任务的结果，就像收到一条系统消息一样。
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

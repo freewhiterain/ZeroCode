@@ -32,6 +32,10 @@ def _tmux_installed() -> bool:
     return shutil.which("tmux") is not None
 
 
+# 【讲解】注意 detect_backend() 目前是个"恒返回 IN_PROCESS"的简化版本——
+# 真正的探测逻辑在下面的 detect_pane_backend()（按环境变量判断是否已经
+# 身处 tmux/iTerm2 会话，或者系统装没装 tmux），但当前代码路径里没有
+# 谁调用它，说明 pane 后端的自动探测暂时被搁置了，一律走进程内模式。
 def detect_backend(
     teammate_mode: str = "",
     is_interactive: bool = True,

@@ -37,6 +37,10 @@ def _relative_time(meta: SessionMeta) -> str:
     return f"{secs // 86400} days ago"
 
 
+# 【讲解】/session resume 不带参数时弹出的会话选择器，支持输入文字实时
+# 过滤（_refilter，纯 Python 子串匹配，不是模糊搜索）。整个组件的状态都是
+# 朴素的 Python 列表/字符串，没有用任何搜索索引库——会话数量通常很少，
+# 简单遍历完全够用。
 class InlineResumeWidget(Vertical, can_focus=True):
     """内联的会话恢复视图，格式与 Go 版 TUI 保持一致。"""
 

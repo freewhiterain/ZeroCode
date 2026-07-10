@@ -65,6 +65,15 @@ TEAMMATE_ADDENDUM = (
 )
 
 
+# 【讲解】这是全项目最"重"的工具——它本身会创建并运行一个全新的 Agent
+# 实例（复用 agent.py 的 Agent 类），实现"子 agent / 后台任务 / 团队队友"
+# 三大能力。理解它的关键是先看 execute() 顶部的分支：
+#   有 team_name        → _execute_as_teammate()：长驻团队成员，独立 worktree
+#   subagent_type 有 isolation → _execute_with_worktree()：跑在隔离 git worktree 里
+#   其余情况            → 走本方法主体：普通一次性子 agent（或 fork）
+# 不管走哪条路，骨架都是同一件事："配好一个 Agent 需要的全部零件（client、
+# 工具表、权限检查器、system prompt），new 一个 Agent 出来，调用它的
+# run_to_completion() 或扔进后台任务管理器"。
 class AgentTool(Tool):
     name = "Agent"
     description = (
@@ -139,6 +148,11 @@ class AgentTool(Tool):
                 )
             conversation = ConversationManager()
         else:
+            # 【讲解】"fork"模式：不指定 subagent_type 时，子 agent 直接复制父
+            # agent 当前的整段对话历史（build_forked_messages，见 agents/fork.py）
+            # 作为起点，而不是从空白开始。适合"分身去做一件和主线紧密相关、
+            # 需要看到完整上下文的子任务"，区别于 subagent_type 那种"从零开始
+            # 的专业侦察兵"（如 Explore/Plan）。
             if not self._enable_fork:
                 return ToolResult(
                     output="Fork mode is not enabled. "
@@ -171,7 +185,10 @@ class AgentTool(Tool):
         # 选择 LLM 客户端
         client = self._select_llm(p, definition)
 
-        # 判断是否后台运行
+        # 【讲解】判断是否后台运行：后台任务不会阻塞父 agent 的当前回合——
+        # 交给 task_manager.launch()（agents/task_manager.py）在独立的
+        # asyncio.Task 里跑，父 agent 继续对话，完成后通过通知机制把结果
+        # 塞回父对话（见 agent.py 的 notification_fn / drain_notifications）。
         is_background = p.run_in_background or definition.background
         if self._enable_fork:
             is_background = True
@@ -269,6 +286,14 @@ class AgentTool(Tool):
 
         return ToolResult(output=result_text or "(sub-agent returned no output)")
 
+    # 【讲解】"团队队友"是最复杂的一种子 agent：它不是跑完就消失的一次性
+    # 任务，而是长驻的、有名字的团队成员，拥有自己的隔离 worktree、可以通过
+    # SendMessage 和其他成员/lead 互相通信（见 tools/send_message.py）。
+    # 步骤大致是：① 起名字（重名自动加序号）② 加载 agent 定义/fork 对话
+    # ③ 建专属 worktree ④ 选模型 ⑤ 探测运行后端（进程内 or tmux/iTerm2 pane）
+    # ⑥ 用 build_teammate_tools 组装它能用的工具集（含团队协作工具）
+    # ⑦ 造出 sub_agent 并附加"你在团队里"的专属指令 TEAMMATE_ADDENDUM
+    # ⑧ 注册名字和成员信息 ⑨ 按后端类型真正启动（进程内 or 独立终端面板）。
     async def _execute_as_teammate(self, p: AgentToolParams) -> ToolResult:
         if self._team_manager is None:
             return ToolResult(output="TeamManager not configured.", is_error=True)
@@ -449,6 +474,10 @@ class AgentTool(Tool):
         )
 
 
+    # 【讲解】"pane"后端：不是在当前 Python 进程里 asyncio 跑队友，而是真的
+    # 开一个新的 tmux/iTerm2 终端面板，在里面启动一个全新的 `zerocode` 进程
+    # 去执行队友。好处是队友有独立、可见的终端窗口（用户能亲眼看它在干什么），
+    # 坏处是失败了不能优雅重试，只能提示用户手动处理（见下面的 except 分支）。
     def _spawn_pane_teammate(
         self, p: Any, team: Any, member: Any, backend: Any, wt: Any,
         agent_id: str, teammate_name: str,
@@ -500,6 +529,10 @@ class AgentTool(Tool):
         )
 
 
+    # 【讲解】子 agent 用什么模型？优先级：调用参数里显式指定的 model >
+    # agent 定义文件里写的 model（除非是特殊值 "inherit"）> 直接沿用父 agent
+    # 的 client。像 "haiku"/"sonnet"/"opus" 这种简称会在 _create_client_for_model
+    # 里被映射成完整模型 ID。
     def _select_llm(
         self,
         params: AgentToolParams,
@@ -519,6 +552,11 @@ class AgentTool(Tool):
         return self._parent_agent.client
 
 
+    # 【讲解】"隔离 worktree 子 agent"：适合"想让子 agent 大胆尝试、改动文件，
+    # 但不希望影响主项目目录"的场景。流程和普通子 agent 很像，区别在于
+    # work_dir 换成了新建的 worktree 路径，而且任务完成后会调用
+    # auto_cleanup 决定这个临时 worktree 是删除还是保留（有未提交改动时保留
+    # 并把路径告诉用户，参见 worktree/cleanup.py）。
     async def _execute_with_worktree(self, p: AgentToolParams) -> ToolResult:
         if self._worktree_manager is None:
             return ToolResult(

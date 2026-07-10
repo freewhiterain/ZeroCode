@@ -13,6 +13,12 @@ from typing import Any
 from zerocode.conversation import ConversationManager, Message, ToolResultBlock, ToolUseBlock
 
 
+# 【讲解】这是给"外部进程队友"（tmux/iTerm2 pane 后端）用的对话历史
+# 存取工具——因为那些队友是完全独立的操作系统进程，内存不共享，如果需要
+# 把它们的对话保存下来跨进程读取（比如给别的组件查看队友聊了什么），
+# 就得靠这种"序列化成 JSON 文件、按需反序列化回 ConversationManager"的
+# 方式。和 memory/session.py 的 session 持久化目的类似，但这里更简单
+# （不需要支持压缩边界、增量追加等复杂特性，一次性整体读写）。
 def _serialize_conversation(conv: ConversationManager) -> list[dict[str, Any]]:
     messages: list[dict[str, Any]] = []
     for msg in conv.history:

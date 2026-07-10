@@ -26,6 +26,12 @@ class Decision:
     reason: str
 
 
+# 【讲解】★ 权限系统的总入口 ★——每次工具调用前，agent.py 都会调用它的
+# check() 方法。整个类只做一件事：把上面几个独立的小模块（危险命令检测、
+# 路径沙箱、规则引擎、模式矩阵）按"从最强硬到最兜底"的顺序串成一条判定
+# 链，一旦某一层给出明确结论（allow/deny）就立刻返回，不再往下走——这是
+# 典型的"责任链模式"（Chain of Responsibility）。具体顺序看下面 check()
+# 方法里的 Layer 0~5 注释，数字越小优先级越高。
 class PermissionChecker:
 
 

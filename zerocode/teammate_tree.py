@@ -12,6 +12,14 @@ from rich.text import Text
 from zerocode.teams.progress import TeammateProgress
 
 
+# 【讲解】和前面几个 InlineXxxWidget 不同，这个用的是 Textual 的
+# `reactive()` 属性——teammates/leader_tokens 一旦被外部代码赋新值，
+# Textual 会自动检测到变化并重新调用 render()，不需要像其他弹窗那样手动
+# `_refresh()`。适合这种"数据由外部（团队进度轮询）持续推送更新，UI 只是
+# 被动展示"的场景。render() 返回的是 rich.Text 对象（拼接不同颜色/样式的
+# 片段），这是 Textual 底层依赖的 Rich 库的富文本构建方式，和别处用
+# `[bold]...[/]` 标记字符串是两种不同的富文本写法（这里选 Text 对象是因为
+# 要动态拼接可变数量的行，用对象 API 比字符串拼接更不容易出错）。
 class TeammateTree(Widget):
     """Renders a tree of teammate progress below the spinner."""
 

@@ -34,6 +34,13 @@ class WorktreeError(Exception):
     pass
 
 
+# 【讲解】★ worktree 子系统的总管家 ★，封装所有 `git worktree` 命令行操作。
+# 有个值得注意的性能技巧：read_worktree_head_sha() 不调用 `git rev-parse
+# HEAD` 这种要开子进程的命令，而是直接手工解析 `.git` 文件和 refs 文件
+# （worktree 的 .git 不是目录而是一个指向真实 git 目录的文本文件，见
+# _connect_stdio 类似的"手动读 git 内部文件"手法）——目的是在 create()
+# 里快速判断"这个 worktree 是不是已经存在、可以直接复用"，避免每次都启动
+# git 子进程的开销（进程启动比读几个小文件慢得多）。
 class WorktreeManager:
     def __init__(
         self,

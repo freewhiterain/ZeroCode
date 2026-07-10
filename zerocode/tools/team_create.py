@@ -103,6 +103,12 @@ class TeamCreateTool(Tool):
         except Exception as e:
             return ToolResult(output=f"Failed to create team: {e}", is_error=True)
 
+        # 【讲解】"协调模式"（coordinator mode）：团队建好后，把创建团队的这个
+        # agent 从"什么都能干的通才"收窄成"只能派活的调度员"——它的工具集被
+        # apply_coordinator_filter 过滤，砍掉 ReadFile/EditFile 等具体执行类
+        # 工具，只留 Agent/SendMessage/TaskCreate 这类"派发"工具。目的是逼它
+        # 把活分给队友而不是自己抢着干。旧的完整工具表存进 _full_registry，
+        # TeamDelete 时会原样恢复（见 team_delete.py）。
         coordinator_note = ""
         from zerocode.teams.coordinator import is_coordinator_mode
         if is_coordinator_mode(self._enable_coordinator_mode):

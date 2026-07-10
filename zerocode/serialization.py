@@ -16,6 +16,15 @@ from zerocode.conversation import Message
 # 这一层属于「适配器」职责，对话层（ConversationManager）只管消息、不懂线上格式。
 
 
+# 【讲解】三个 build_* 函数结构几乎一样：遍历内部 Message 列表，按
+# "这条消息是工具调用/工具结果/普通文本"分支，翻译成对应 API 要的 dict
+# 形状。区别只在于三家 API 对"工具调用"和"工具结果"的表达方式不同：
+#   Anthropic — 工具调用/结果都是 assistant/user 消息 content 里的一个 block
+#   OpenAI Responses — 工具调用/结果各自独立成一条消息（function_call /
+#     function_call_output），不嵌在 assistant/user 消息里
+#   OpenAI Chat Completions — 工具调用挂在 assistant 消息的 tool_calls 字段，
+#     结果是单独的 role="tool" 消息
+# 对照着读这三个函数，能直观看到"同一份数据，三种法律文书格式"的感觉。
 def build_anthropic_messages(messages: list[Message]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for m in messages:
@@ -50,6 +59,11 @@ def build_anthropic_messages(messages: list[Message]) -> list[dict[str, Any]]:
                 })
             result.append({"role": "user", "content": content})
         else:
+            # 【讲解】为什么要合并连续的 user 消息？因为 conversation.py 里
+            # 一次可能连续调用好几次 add_system_reminder（比如"收到队友消息"+
+            # "计划模式提醒"各算一条），如果原样各发一条 user 消息，Anthropic
+            # 的 API 不允许两条连续的同角色消息紧挨着（一般要求 user/assistant
+            # 交替）。所以这里把连续的纯文本 user 消息用换行拼成一条。
             # 合并连续的 user 纯文本消息（system-reminder 或普通 user 文本）。
             # 不合并到 tool_result 类型的 user 消息中（content 是 list）。
             if (

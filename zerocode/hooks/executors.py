@@ -16,6 +16,13 @@ from zerocode.hooks.models import Action, ActionResult, HookContext
 log = logging.getLogger(__name__)
 
 
+# 【讲解】四个 execute_* 函数分别对应 Action.type 的四种取值，末尾的
+# _EXECUTOR_MAP + execute_action 组成一个简单的"策略分派表"（比一长串
+# if/elif 更清晰，加新类型只需往字典里添一行）。execute_http 里用
+# loop.run_in_executor 把同步阻塞的 urlopen 丢到线程池执行，避免卡住
+# asyncio 事件循环——这是"用同步库时不阻塞异步代码"的标准写法。
+# execute_agent 目前只是个占位实现（"交给 agent 处理"这个类型还没真正接入
+# Agent 类），调用了也只会返回一句提示，不会真的启动 agent。
 async def execute_command(action: Action, ctx: HookContext) -> ActionResult:
     command = ctx.expand(action.command)
     try:

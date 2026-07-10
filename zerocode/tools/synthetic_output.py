@@ -20,6 +20,10 @@ class SyntheticOutputParams(BaseModel):
     output: dict[str, Any] | list[Any] | str
 
 
+# 【讲解】这个工具存在的意义有点特殊：它不产生新信息，只是给"非交互/
+# 协调模式"下的 agent 一个显式的"我要收尾了，这是我的结构化结果"信号
+# （对比交互模式下模型直接说文字就算完成）。可选的 _json_schema 是一个
+# 极简的手写校验器（只查 type 和 required，不是完整 JSON Schema 实现）。
 class SyntheticOutputTool(Tool):
     name = "SyntheticOutput"
     description = (

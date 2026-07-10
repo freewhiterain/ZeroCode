@@ -44,6 +44,9 @@ class Grep(Tool):
         if not glob_pattern.startswith("**/"):
             glob_pattern = "**/" + glob_pattern
 
+        # 【讲解】朴素实现：逐文件读入内存、按行用正则匹配，没有用外部 ripgrep
+        # 这类高性能工具。对大仓库会慢，但逻辑简单直观，适合先理解"搜索工具
+        # 该返回什么格式"（file:line:content，和 grep -n 的输出习惯一致）。
         results: list[str] = []
         for file_path in sorted(base.glob(glob_pattern)):
             if not file_path.is_file():

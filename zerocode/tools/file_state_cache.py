@@ -11,6 +11,10 @@ from pathlib import Path
 
 
 # 文件状态缓存：为写入类工具提供统一的“读取后才能修改”保护。
+# 【讲解】被 ReadFile / WriteFile / EditFile 三个工具共用一个实例（在
+# tools/__init__.py 的注册表里创建）。核心思路很像乐观锁：记录读取时的
+# mtime（文件修改时间，纳秒精度），写入前对比当前 mtime 是否还一样——
+# 一样就说明这段时间没人动过文件，可以放心写；不一样就拒绝，逼模型重新读。
 class FileStateCache:
     """Tracks which files have been read, enforcing read-before-edit.
 

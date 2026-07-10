@@ -15,6 +15,11 @@ from typing import Optional
 from zerocode.teams.progress import TeammateProgress
 
 
+# 【讲解】三种"队友后端"，决定一个团队成员实际在哪里运行：
+#   IN_PROCESS — 和 lead 共用同一个 Python 进程的 asyncio 事件循环，能实时
+#     上报进度，是默认选项（见 backend_detect.detect_backend 目前恒返回它）。
+#   TMUX / ITERM2 — 真开一个独立的终端面板跑一个全新的 zerocode 进程，
+#     用户能看到队友的真实终端窗口，但跨进程通信只能靠文件（mailbox）。
 class BackendType(str, Enum):
     TMUX = "tmux"
     ITERM2 = "iterm2"
@@ -55,6 +60,10 @@ def _sanitize_name(name: str) -> str:
     return slug or "team"
 
 
+# 【讲解】AgentTeam 是一个团队的完整快照：谁是 lead、有哪些成员、每个
+# 成员是否 active。save()/load() 把它整体序列化成一个 JSON 文件
+# （~/.zerocode/teams/<slug>/config.json），这样即使程序重启，团队状态也
+# 不会丢——TeamManager 的 get_team() 找不到内存缓存时就会从这个文件读回来。
 @dataclass
 class AgentTeam:
     name: str

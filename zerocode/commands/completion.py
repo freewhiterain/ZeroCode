@@ -10,6 +10,12 @@ from textual.message import Message as TMessage
 from textual.widgets import Static
 
 
+# 【讲解】这是个 Textual UI 组件（继承 Static，Textual 的基础展示控件），
+# 就是你输入 `/` 之后弹出的那个命令候选列表。核心状态只有三样：候选项的
+# 展示文本列表、候选项对应的实际值列表、当前高亮到第几个（_cursor）。
+# move_up/move_down 处理方向键，_refresh_content 用 Textual 支持的
+# `[bold reverse]`/`[dim]` 富文本标记高亮当前选中项，跟命令行框架无关，
+# 是 Textual 自己的样式语法。
 class CompletionPopup(Static):
 
     DEFAULT_CSS = """

@@ -24,6 +24,16 @@ class SkillParseError(Exception):
     pass
 
 
+# 【讲解】"Skill"就是你在这个会话开头看到的 /commit、/review、/test 这类
+# 斜杠命令背后的东西——本质是一份带 YAML frontmatter 的 Markdown SOP
+# （标准操作流程）。结构和 agents/parser.py 的 AgentDef 几乎一模一样
+# （同样是 frontmatter + 正文），但多了两个 skill 专属的概念：
+#   mode — "inline"（把正文直接注入当前对话，让当前 agent 接着执行）
+#     还是"fork"（开一个隔离的子 agent 单独执行，见 executor.py）
+#   context — fork 模式下子 agent 能看到多少主对话上下文
+#     （full 全部摘要 / recent 最近几条 / none 完全不给）
+# substitute_arguments 支持 `$ARGUMENTS` 占位符，用户输入 `/mycommand 参数`
+# 时"参数"部分会替换进 skill 正文里。
 @dataclass
 class SkillDef:
     name: str

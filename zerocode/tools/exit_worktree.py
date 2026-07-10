@@ -70,6 +70,10 @@ class ExitWorktreeTool(Tool):
 
         discard = params.discard_changes or False
 
+        # 【讲解】安全阀：删除 worktree 前先检查有没有"没提交的文件"或"没合并
+        # 的提交"。如果有，且调用方没有显式传 discard_changes=true，就拒绝
+        # 执行并把变更列出来——逼模型（进而逼用户）明确知情后再确认丢弃，
+        # 防止一次 agent 的误操作悄悄抹掉一堆工作成果。
         if action == "remove" and not discard:
             changes = count_worktree_changes(
                 session.worktree_path, session.original_head_commit

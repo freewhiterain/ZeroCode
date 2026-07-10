@@ -22,6 +22,10 @@ async def handle_compact(ctx: CommandContext) -> None:
     from zerocode.agent import CompactNotification, ErrorEvent
 
 
+    # 【讲解】/compact 就是手动触发 context/manager.py 的 Layer 2 压缩
+    # （auto_compact 的 manual=True 版本，跳过阈值判断，用户明确要求就执行）。
+    # 压缩后要把 boundary（摘要+保留尾部）持久化进 session 文件，否则下次
+    # /session resume 恢复出来的就是压缩前的完整历史，白压缩了。
     result = await ctx.agent.manual_compact(ctx.conversation)
     if isinstance(result, CompactNotification):
         # 持久化 compact_boundary，使后续 resume 可重建压缩后的状态。

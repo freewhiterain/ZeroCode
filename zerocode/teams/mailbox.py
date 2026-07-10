@@ -35,6 +35,12 @@ class MailboxMessage:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
+# 【讲解】read() 和 consume() 几乎一样，唯一区别是 consume() 读完立刻
+# f.unlink() 删除文件——"消费型"读取，读过一次的消息就不会再被读到第二次
+# （对应 agent.py 的 _consume_mailbox，每轮循环把新消息读进对话后就该清空，
+# 不然下一轮又读到同一批旧消息）。read() 保留文件不删，用于像 /trace 这种
+# 只是"看一眼"而不打算清空的场景。文件名前缀用时间戳
+# （f"{timestamp:.6f}_{id}.json"）保证 sorted() 遍历时天然按时间顺序。
 class Mailbox:
     """按 agent_id 分目录存放消息文件的轻量信箱。"""
     def __init__(self, base_dir: str | Path) -> None:

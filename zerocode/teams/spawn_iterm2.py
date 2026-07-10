@@ -33,6 +33,9 @@ def _run_it2(*args: str) -> str:
     return result.stdout.strip()
 
 
+# 【讲解】和 spawn_tmux.py 是同一个思路的 iTerm2 版本（复用它的
+# build_cli_command 拼命令行），只是调用的外部程序换成了 iTerm2 官方提供
+# 的 it2 命令行工具，用 it2 split-pane 开一个新窗格并执行命令。
 def spawn_iterm2_teammate(
     team_name: str,
     teammate_name: str,

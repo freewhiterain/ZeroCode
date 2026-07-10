@@ -43,6 +43,9 @@ class WriteFile(Tool):
 
 
     async def execute(self, params: Params) -> ToolResult:
+        # 【讲解】"先读后写"保护（见 file_state_cache.py）：如果文件已存在，
+        # 必须先用 ReadFile 读过、且读之后没被外部程序改动过，才允许覆盖写入。
+        # 目的是防止模型在没看到文件最新内容的情况下把用户刚做的修改覆盖掉。
         if self.file_history is not None:
             self.file_history.track_edit(params.file_path)
 

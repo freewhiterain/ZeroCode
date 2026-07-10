@@ -40,6 +40,13 @@ _USER_LEVEL_HEADERS = {"用户偏好", "纠正反馈"}
 _PROJECT_LEVEL_HEADERS = {"项目知识", "参考资料"}
 
 
+# 【讲解】"自动记忆"和你现在正在用的机制是同一回事——但这里是它更早期/
+# 更简单的版本："每 5 轮对话"（agent.py 的 MEMORY_EXTRACTION_INTERVAL）
+# 就把最近的对话丢给 LLM，让它按"用户偏好/纠正反馈/项目知识/参考资料"
+# 四个分类总结成 Markdown，分别存进用户级和项目级的 memories.md 文件。
+# 下次对话开始时 load() 把这两个文件读出来注入 system prompt（见
+# conversation.py 的 inject_long_term_memory）。整个过程不需要用户手动
+# 操作，模型自己判断"什么值得记住"。
 class MemoryManager:
     def __init__(self, project_root: str) -> None:
         self._user_path = Path.home() / USER_MEMORIES_RELPATH

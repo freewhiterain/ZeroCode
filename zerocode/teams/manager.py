@@ -35,6 +35,13 @@ class TeamError(Exception):
     pass
 
 
+# 【讲解】★ 团队协作子系统的总管家 ★，把 AgentTeam（元数据）、
+# SharedTaskStore（任务看板）、Mailbox（通信）、进程/pane 句柄这几样东西
+# 按团队名字统一管理起来，并提供"惰性加载"——get_team/get_task_store/
+# get_mailbox 都是先查内存缓存，没有就从磁盘文件读回来再缓存，这样即使
+# TeamManager 实例是新建的（比如程序重启后），只要磁盘上的团队目录还在，
+# 依然能找回完整状态。drain_lead_mailbox() 是 agent.py 每轮循环都会调用
+# 的方法，把所有团队里"发给 lead"的未读消息汇总成通知文本。
 class TeamManager:
     def __init__(self, worktree_manager: Any = None, trace_manager: Any = None) -> None:
         self._teams: dict[str, AgentTeam] = {}

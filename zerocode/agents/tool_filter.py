@@ -82,6 +82,14 @@ def _is_mcp_tool(name: str) -> bool:
     return name.startswith("mcp__")
 
 
+# 【讲解】子 agent 能用哪些工具，是从父 agent 的完整工具表里"逐层做减法"
+# 过滤出来的（见下面 5 个"第 N 层"注释）：先砍掉所有子 agent 一律不该碰的
+# 工具（比如不能再嵌套开 Agent），如果是自定义/项目定义的 agent 再多砍
+# 一批，如果是后台运行则只留一份"异步安全"白名单，最后再套用这个 agent
+# 定义文件里自己写的 tools/disallowedTools。MCP 工具（第三方插件工具，名字
+# 以 mcp__ 开头）全程豁免过滤，因为它们不属于内置的"危险操作"范畴。
+# build_teammate_tools 和 apply_coordinator_filter 是同一个思路在"团队队友"
+# 和"协调模式"两个场景下的变体。
 def resolve_agent_tools(
     parent_registry: ToolRegistry,
     definition: AgentDef,

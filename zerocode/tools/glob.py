@@ -28,6 +28,9 @@ class Glob(Tool):
 
 
     async def execute(self, params: Params) -> ToolResult:
+        # 【讲解】Path.glob() 是 Python 标准库自带的通配符匹配（`**` 表示递归
+        # 任意层目录）。这里额外过滤掉 SKIP_DIRS（.git、node_modules 等，
+        # 定义在 tools/base.py），避免把海量依赖文件也搜出来。
         base = Path(params.path)
         if not base.exists():
             return ToolResult(output=f"Error: path not found: {params.path}", is_error=True)

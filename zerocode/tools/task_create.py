@@ -26,6 +26,12 @@ class TaskCreateParams(BaseModel):
     blocked_by: list[str] | None = None
 
 
+# 【讲解】TaskCreate/TaskGet/TaskList/TaskUpdate 四个文件是同一套"团队任务
+# 看板"的增删改查工具（类似一个迷你 Jira），共用 team_manager.get_task_store()
+# 拿到的 SharedTaskStore（实现见 teams/shared_task.py，JSON 文件持久化）。
+# 团队里的多个 agent 靠这个共享看板协调"谁在做什么、谁在等谁"，而不是
+# 只靠 SendMessage 互相口头通知。四个文件结构几乎一样：校验参数 → 调用
+# store 对应方法 → 把结果格式化成给模型看的文本。读懂这一个就懂了另外三个。
 class TaskCreateTool(Tool):
     name = "TaskCreate"
     description = (

@@ -33,6 +33,12 @@ class SharedTask:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
+# 【讲解】给 TaskCreate/TaskGet/TaskList/TaskUpdate 四个工具（tools/task_*.py）
+# 提供实际存储。注意每个读写方法开头都调用 self._load()——因为团队里
+# 可能有好几个 agent（不同进程，比如 tmux pane 队友）都在操作同一份
+# tasks.json，每次操作前重新读一遍文件能捕捉到别的进程刚做的修改，算是
+# 一种简易的"文件即数据库"多进程同步手段（没有加锁，纯粹靠"整个文件读写
+# 通常足够快，冲突窗口很小"来碰运气，规模小的团队场景够用）。
 class SharedTaskStore:
     """以 JSON 文件为后端的共享任务仓库。"""
 

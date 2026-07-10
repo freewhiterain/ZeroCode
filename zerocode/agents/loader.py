@@ -93,6 +93,12 @@ class AgentLoader:
 
         return results
 
+    # 【讲解】同名 agent 在项目级/用户级/内置级都可能定义，"先到先得"——
+    # `if agent_def.agent_type not in seen` 保证越先扫描到优先级越高的一层
+    # 写进去后，后面同名的就不会覆盖它。所以扫描顺序本身就是优先级：项目
+    # 目录（.zerocode/agents/）> 用户目录（~/.zerocode/agents/）> 内置
+    # （随包分发的 builtins/*.md）。想覆盖内置的 Explore agent，直接在项目
+    # 里放一个同名 .md 文件就行。
     def load_all(self) -> dict[str, AgentDef]:
         seen: dict[str, AgentDef] = {}
 
@@ -119,6 +125,11 @@ class AgentLoader:
         return seen
 
 
+    # 【讲解】"热重载"：每次 get() 都尝试重新读一遍源文件，而不是只用内存里
+    # 缓存的版本。好处是你编辑一个 agent 的 .md 定义文件后，不用重启
+    # ZeroCode，下次调用这个 agent 就立刻生效——对开发/调试自定义 agent
+    # 很友好。重新解析失败（比如你正编辑到一半、YAML 暂时不合法）就退回
+    # 用缓存的旧版本，不会让整个程序崩溃。
     def get(self, agent_type: str) -> AgentDef | None:
         cached = self._agents.get(agent_type)
         if cached is None:

@@ -9,6 +9,12 @@ from __future__ import annotations
 import threading
 
 
+# 【讲解】全项目最简单的类之一：一个加了锁的字典。被 ReadFile/WriteFile/
+# EditFile 共用（见 tools/__init__.py 的 create_default_registry），
+# 用来避免同一个文件在一轮对话里被反复读磁盘——第一次 ReadFile 读了就存
+# 进来，之后同一路径的读取直接命中缓存；写入/编辑成功后 invalidate() 清掉
+# 对应条目，保证下次读到的是最新内容。加锁是因为并行执行的只读工具批次
+# （见 agent.py 的 partition_tool_calls）可能同时访问这个缓存。
 class FileCache:
     """基于路径索引的线程安全字符串缓存。"""
     def __init__(self) -> None:

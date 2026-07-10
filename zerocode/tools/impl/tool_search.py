@@ -26,6 +26,13 @@ class ToolSearchParams(BaseModel):
 
 
 # 延迟工具检索工具：只暴露搜索入口，具体发现和 schema 生成交给注册表处理。
+# 【讲解】这就是你（学习者）在跟我对话时系统提示里反复出现的那个
+# "The following deferred tools are now available..." 机制的实现原型。
+# 两种用法：① `select:名字1,名字2` 精确按名字加载（对应
+# ToolRegistry.find_deferred_by_names）；② 普通关键词，走
+# ToolRegistry.search_deferred 做简单的字符串打分排序（名字命中权重更高）。
+# 找到后统一调用 mark_discovered，下一轮组装工具列表时这些工具就会真正
+# 出现在发给模型的 schema 里了。
 class ToolSearchTool(Tool):
     name = "ToolSearch"
     description = (

@@ -218,6 +218,10 @@ def validate_teammate_mode(mode: object) -> str:
     return mode
 
 
+# 【讲解】这个文件是纯粹的"数据校验层"：只做类型/取值检查、抛
+# ConfigError 或返回清洗后的 dict，不涉及任何业务逻辑。好处是 config.py
+# 的 _load_single_file() 可以完全信任 validate_config_structure() 的返回值，
+# 不用在组装 dataclass 时到处判空、防御式编程——脏活都在这一层做完了。
 def validate_config_structure(raw: object) -> dict:
     """校验的主入口。校验解析后的原始配置，返回清洗后的字典。
 

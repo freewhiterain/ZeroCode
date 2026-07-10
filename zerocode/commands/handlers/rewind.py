@@ -10,6 +10,12 @@ import time
 from zerocode.commands.registry import Command, CommandType
 
 
+# 【讲解】/rewind 是 filehistory/history.py 的 UI 入口，三种恢复粒度对应
+# 三个选项：① 代码+对话一起回退（最常用，"整个撤销到那一刻"）② 只回退对话
+# 文本、文件不动 ③ 只恢复文件内容、对话记录保留（比如你想保留讨论过程，
+# 但代码想退回改动前）。conversation.replace_history() 直接截断到快照
+# 记录的 message_index，是"对话层面的回退"；fh.rewind() 则是拿备份文件
+# 覆盖回当前工作目录，是"文件层面的回退"，两者互相独立。
 async def _handle_rewind(ctx) -> None:
     fh = getattr(ctx.agent, "file_history", None)
     if fh is None or not fh.has_snapshots():
