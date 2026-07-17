@@ -9,6 +9,7 @@ from __future__ import annotations
 from zerocode.commands.handlers.clear import CLEAR_COMMAND
 from zerocode.commands.handlers.compact import COMPACT_COMMAND
 from zerocode.commands.handlers.help import HELP_COMMAND
+from zerocode.commands.handlers.graph import GRAPH_COMMAND
 from zerocode.commands.handlers.mcp import MCP_COMMAND
 from zerocode.commands.handlers.memory import MEMORY_COMMAND
 from zerocode.commands.handlers.permission import PERMISSION_COMMAND
@@ -33,6 +34,7 @@ from zerocode.commands.registry import CommandRegistry
 # 是运行期动态注册的，因为它们需要在别处先构造好依赖对象。
 ALL_COMMANDS = [
     HELP_COMMAND,
+    GRAPH_COMMAND,
     COMPACT_COMMAND,
     CLEAR_COMMAND,
     PLAN_COMMAND,

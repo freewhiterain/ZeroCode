@@ -167,6 +167,7 @@ def create_default_registry(file_cache: FileCache | None = None, file_history: A
     from zerocode.tools.grep import Grep
     from zerocode.tools.read_file import ReadFile
     from zerocode.tools.write_file import WriteFile
+    from zerocode.tools.code_explore import CodeExplore
 
     file_state_cache = FileStateCache()
 
@@ -177,4 +178,5 @@ def create_default_registry(file_cache: FileCache | None = None, file_history: A
     registry.register(Bash())
     registry.register(Glob())
     registry.register(Grep())
+    registry.register(CodeExplore())
     return registry
